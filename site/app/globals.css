@@ -22,7 +22,7 @@ h1 { font:30px Georgia,serif; margin:0; letter-spacing:-1px; }
 .timeline:active { cursor:grabbing; }
 .ribbons { width:100%; height:100%; position:absolute; inset:0; animation:arrive 1s ease-out both; }
 .year-grid { position:absolute; inset:0; z-index:1; pointer-events:none; }
-.year-tick { position:absolute; top:0; bottom:0; border-left:1px solid #ffffff20; }
+.year-tick { position:absolute; top:0; bottom:0; }
 .year-tick span { position:absolute; top:-28px; white-space:nowrap; transform:translateX(-50%); font:12px monospace; color:#51626c; }
 .track-labels { position:absolute; inset:0 3.3% 0 23%; display:grid; grid-template-rows:repeat(3,1fr); pointer-events:none; }
 .track-label { display:flex; align-items:center; justify-content:flex-end; text-align:right; color:#243642; padding-top:3px; }
