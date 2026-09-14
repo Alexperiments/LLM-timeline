@@ -1,7 +1,8 @@
 import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import ideas, { type Idea } from 'virtual:ideas';
-import { layoutIdeas, formatIdeaDate, laneY, ribbonPaths, type LayoutNode } from './idea-content';
+import { layoutIdeas, formatIdeaDate, laneY, ribbonPaths, centerlinePaths, type LayoutNode } from './idea-content';
+import { LanePulses } from './lane-pulses';
 import { SplitLesson } from './split-lesson';
 import { Slider } from '@/components/ui/slider';
 
@@ -237,7 +238,10 @@ export default function Home() {
               <use href="#agents-ribbon" fill="#94a28a"/>
               <g clipPath="url(#architecture-clip)"><use href="#agents-ribbon" fill="#9794b0"/></g>
             </g>
-            <g clipPath="url(#lane-content-clip)" fill="none" stroke="white" strokeOpacity=".55"><path d="M0 253 C120 253 142 90 300 90 H1440"/><path d="M0 253 H1440"/><path d="M0 253 C120 253 142 420 300 420 H1440"/></g>
+            <g clipPath="url(#lane-content-clip)">
+              <g fill="none" stroke="white" strokeOpacity=".55">{centerlinePaths.map(path => <path key={path} d={path}/>)}</g>
+              <LanePulses endX={contentEnd / width * 1440}/>
+            </g>
           </svg>
           <div className="ideas-viewport" style={{ width: contentEnd }}>
             {layout.map((lane, laneIndex) => <div className="idea-lane" key={tracks[laneIndex].title} style={{ top: 0, height: '100%' }}>

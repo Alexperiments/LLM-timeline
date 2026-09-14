@@ -65,6 +65,9 @@ function ribbonPath(end: number) {
 }
 
 export const ribbonPaths = LANE_ENDS.map(ribbonPath);
+export const centerlinePaths = LANE_ENDS.map(end =>
+  `M0 253 C120 253 142 ${end} 300 ${end} H${VIEWBOX_WIDTH}`,
+);
 
 // Follow the same cubic centerlines used by the ribbon SVG, including its curved origin.
 export function laneY(lane: number, x: number, surfaceWidth: number) {
