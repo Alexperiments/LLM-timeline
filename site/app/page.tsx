@@ -86,6 +86,24 @@ export default function Home() {
     const start = Math.max(MIN, Math.min(max - width, initial[0] + amount));
     setRange([start, start + width]);
   }
+  const zoomAnim = useRef<number | null>(null);
+  useEffect(() => () => { if (zoomAnim.current !== null) cancelAnimationFrame(zoomAnim.current); }, []);
+  function zoomRange(target: [number, number]) {
+    if (zoomAnim.current !== null) cancelAnimationFrame(zoomAnim.current);
+    const from = range;
+    const to = target;
+    const duration = 450;
+    const t0 = performance.now();
+    const ease = (t: number) => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const step = (now: number) => {
+      const t = Math.min(1, (now - t0) / duration);
+      const e = ease(t);
+      setRange([from[0] + (to[0] - from[0]) * e, from[1] + (to[1] - from[1]) * e]);
+      if (t < 1) zoomAnim.current = requestAnimationFrame(step);
+      else zoomAnim.current = null;
+    };
+    zoomAnim.current = requestAnimationFrame(step);
+  }
   function handleCluster(node: LayoutNode) {
     if (node.kind !== 'cluster') return;
     if (node.expandable) {
@@ -94,7 +112,7 @@ export default function Home() {
       const center = (Math.min(...values) + Math.max(...values)) / 2;
       const span = d / 0.3;
       const start = Math.max(MIN, center - span / 2);
-      setRange([start, start + span]);
+      zoomRange([start, start + span]);
       setOpenCluster(null);
     } else {
       const key = node.items.map(item => item.id).sort().join('|');
