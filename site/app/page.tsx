@@ -6,7 +6,17 @@ import { SplitLesson } from './split-lesson';
 import { Slider } from '@/components/ui/slider';
 
 const DAY = 86_400_000;
+const NAVIGATOR_EDGE_INSET = 24;
+const THUMB_DIAMETER = 20;
+const MIN_RANGE_STEPS = 14;
 const MIN = Math.min(Date.UTC(2018, 0, 1), ...ideas.map(idea => idea.start.value));
+const minStepsForTrackWidth = (trackWidth: number, max: number) => Math.min(
+  Math.max(1, Math.floor((max - MIN) / DAY)),
+  Math.max(
+    MIN_RANGE_STEPS,
+    Math.ceil((THUMB_DIAMETER * 2 * (max - MIN)) / (trackWidth * DAY)),
+  ),
+);
 const TODAY = new Date().setUTCHours(0, 0, 0, 0);
 const MAX = Math.max(TODAY, ...ideas.map(idea => idea.end?.value ?? idea.start.value));
 const dateLabel = (value: number, detailed = false) => new Intl.DateTimeFormat('en', { year: 'numeric', ...(detailed ? { month: 'short' as const } : {}), timeZone: 'UTC' }).format(value);
@@ -60,6 +70,7 @@ export default function Home() {
   const [contentEnd, setContentEnd] = useState(760);
   const scroller = useRef<HTMLDivElement>(null);
   const selectionDrag = useRef<{ x: number; range: number[] } | null>(null);
+  const [navigatorWidth, setNavigatorWidth] = useState(1000);
   useEffect(() => {
     const today = new Date();
     const end = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
@@ -81,6 +92,27 @@ export default function Home() {
   const [cursor, setCursor] = useState<number | null>(null);
   const drag = useRef<{ x: number; range: number[] } | null>(null);
   const span = range[1] - range[0];
+  const sliderTrackWidth = Math.max(1, navigatorWidth - NAVIGATOR_EDGE_INSET * 2);
+  const minSliderSteps = minStepsForTrackWidth(sliderTrackWidth, max);
+  const minRangeSpan = minSliderSteps * DAY;
+  useEffect(() => {
+    const measure = () => {
+      if (!scroller.current) return;
+      const nextWidth = scroller.current.clientWidth;
+      const nextTrackWidth = Math.max(1, nextWidth - NAVIGATOR_EDGE_INSET * 2);
+      const nextMinRangeSpan = minStepsForTrackWidth(nextTrackWidth, max) * DAY;
+      setNavigatorWidth(nextWidth);
+      setRange(current => {
+        if (current[1] - current[0] >= nextMinRangeSpan) return current;
+        const start = Math.max(MIN, Math.min(max - nextMinRangeSpan, (current[0] + current[1] - nextMinRangeSpan) / 2));
+        return [start, start + nextMinRangeSpan];
+      });
+    };
+    const observer = new ResizeObserver(measure);
+    if (scroller.current) observer.observe(scroller.current);
+    measure();
+    return () => observer.disconnect();
+  }, [max]);
   function pan(amount: number, initial = range) {
     const width = initial[1] - initial[0];
     const start = Math.max(MIN, Math.min(max - width, initial[0] + amount));
@@ -91,7 +123,9 @@ export default function Home() {
   function zoomRange(target: [number, number]) {
     if (zoomAnim.current !== null) cancelAnimationFrame(zoomAnim.current);
     const from = range;
-    const to = target;
+    const targetSpan = Math.min(max - MIN, Math.max(minRangeSpan, target[1] - target[0]));
+    const targetStart = Math.max(MIN, Math.min(max - targetSpan, (target[0] + target[1] - targetSpan) / 2));
+    const to: [number, number] = [targetStart, targetStart + targetSpan];
     const duration = 450;
     const t0 = performance.now();
     const ease = (t: number) => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -147,6 +181,8 @@ export default function Home() {
   const splitDate = selected ? selected.category === 'Practice' ? (selected.start.value + (selected.end?.value ?? max)) / 2 : selected.start.value : 0;
   const splitOrigin = Math.max(0, Math.min(contentEnd, (splitDate - range[0]) / span * contentEnd));
   const results = query.trim() ? ideas.filter(idea => `${idea.title} ${idea.body} ${idea.track}`.toLowerCase().includes(query.toLowerCase().trim())) : [];
+  const rangeStartFraction = (range[0] - MIN) / (max - MIN);
+  const rangeFraction = span / (max - MIN);
 
   return (
     <main className={`observatory ${selected ? 'lesson-open' : ''}`}>
@@ -227,12 +263,12 @@ export default function Home() {
       </section>
 
       <div className="navigator" ref={scroller} inert={!!selected || splitBusy}>
-        <Slider className="time-slider" aria-label="Visible date range" min={MIN} max={max} step={DAY} minStepsBetweenValues={14} value={range} onValueChange={value => setRange(Array.isArray(value) ? value : [value, range[1]])}/>
+        <Slider className="time-slider" aria-label="Visible date range" min={MIN} max={max} step={DAY} minStepsBetweenValues={minSliderSteps} value={range} onValueChange={value => setRange(Array.isArray(value) ? value : [value, range[1]])}/>
         <div className="year-labels" aria-hidden="true">{yearLabels.map(({ value, label }) => { const frac = (value - MIN) / (MAX - MIN); const transform = frac < .06 ? 'none' : frac > .94 ? 'translateX(-100%)' : 'translateX(-50%)'; return <span key={value} style={{ left: `${frac * 100}%`, transform }}>{label}</span>; })}</div>
-        <div className="range-pan" role="slider" tabIndex={0} aria-label="Move visible date range" aria-valuemin={MIN} aria-valuemax={max-span} aria-valuenow={range[0]} aria-valuetext={`${dateLabel(range[0], true)} to ${dateLabel(range[1], true)}`} style={{left: `calc(${(range[0]-MIN)/(max-MIN)*100}% + 24px)`, width: `max(0px, calc(${span/(max-MIN)*100}% - 48px))`}}
+        <div className="range-pan" role="slider" tabIndex={0} aria-label="Move visible date range" aria-valuemin={MIN} aria-valuemax={max-span} aria-valuenow={range[0]} aria-valuetext={`${dateLabel(range[0], true)} to ${dateLabel(range[1], true)}`} style={{left: `${NAVIGATOR_EDGE_INSET + rangeStartFraction * sliderTrackWidth}px`, width: `${Math.max(0, rangeFraction * sliderTrackWidth)}px`}}
           onKeyDown={event => { if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); pan(event.key === 'ArrowLeft' ? -span/10 : span/10); } }}
           onPointerDown={event => { if(event.button !== 0) return; event.preventDefault(); selectionDrag.current = { x: event.clientX, range: [...range] }; event.currentTarget.setPointerCapture(event.pointerId); }}
-          onPointerMove={event => { if(selectionDrag.current && scroller.current) pan((event.clientX-selectionDrag.current.x)/scroller.current.clientWidth*(max-MIN), selectionDrag.current.range); }}
+          onPointerMove={event => { if(selectionDrag.current && scroller.current) pan((event.clientX-selectionDrag.current.x)/Math.max(1, scroller.current.clientWidth - NAVIGATOR_EDGE_INSET * 2)*(max-MIN), selectionDrag.current.range); }}
           onPointerUp={() => { selectionDrag.current = null; }} onPointerCancel={() => { selectionDrag.current = null; }}/>
       </div>
     </main>
