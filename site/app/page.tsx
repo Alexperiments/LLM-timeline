@@ -89,6 +89,15 @@ export default function Home() {
     month += step;
   }
   const detailed = step < 12;
+  const yearLabels: { value: number; label: string }[] = [];
+  {
+    const yearSpan = Math.max(1, Math.round((MAX - MIN) / DAY / 365.25));
+    const interval = Math.max(1, Math.ceil(yearSpan / 7));
+    for (let y = new Date(MIN).getUTCFullYear(); y <= new Date(MAX).getUTCFullYear(); y += interval) {
+      const value = Date.UTC(y, 0, 1);
+      if (value >= MIN && value <= MAX) yearLabels.push({ value, label: dateLabel(value) });
+    }
+  }
   const layout = layoutIdeas(range, contentEnd, max);
   const laneHeight = Math.max(150, ...layout.map(lane => lane.rows * 42 + 24));
   const splitDate = selected ? selected.category === 'Practice' ? (selected.start.value + (selected.end?.value ?? max)) / 2 : selected.start.value : 0;
@@ -161,6 +170,7 @@ export default function Home() {
 
       <div className="navigator" ref={scroller} inert={!!selected || splitBusy}>
         <Slider className="time-slider" aria-label="Visible date range" min={MIN} max={max} step={DAY} minStepsBetweenValues={14} value={range} onValueChange={value => setRange(Array.isArray(value) ? value : [value, range[1]])}/>
+        <div className="year-labels" aria-hidden="true">{yearLabels.map(({ value, label }) => { const frac = (value - MIN) / (MAX - MIN); const transform = frac < .06 ? 'none' : frac > .94 ? 'translateX(-100%)' : 'translateX(-50%)'; return <span key={value} style={{ left: `${frac * 100}%`, transform }}>{label}</span>; })}</div>
         <div className="range-pan" role="slider" tabIndex={0} aria-label="Move visible date range" aria-valuemin={MIN} aria-valuemax={max-span} aria-valuenow={range[0]} aria-valuetext={`${dateLabel(range[0], true)} to ${dateLabel(range[1], true)}`} style={{left: `calc(${(range[0]-MIN)/(max-MIN)*100}% + 24px)`, width: `max(0px, calc(${span/(max-MIN)*100}% - 48px))`}}
           onKeyDown={event => { if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); pan(event.key === 'ArrowLeft' ? -span/10 : span/10); } }}
           onPointerDown={event => { if(event.button !== 0) return; event.preventDefault(); selectionDrag.current = { x: event.clientX, range: [...range] }; event.currentTarget.setPointerCapture(event.pointerId); }}
