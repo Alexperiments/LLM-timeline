@@ -103,6 +103,8 @@ html,body,#root { height:100%; overflow:hidden; }
 .date-heading { flex-shrink:0; }
 .ideas-viewport { overflow:visible; clip-path:inset(-60px 0 -20px 0); }
 .idea-node { height:44px; padding:0; background:transparent; border:0; box-shadow:none; border-radius:50%; display:grid; place-items:center; }
+/* Match the 22px anchor offset in layoutIdeas so dots stay on the centerline. */
+.point-node { width:44px; }
 .idea-node:hover,.idea-node:focus-visible { background:transparent; box-shadow:none; z-index:5; }
 .idea-dot { display:block; width:18px; height:18px; border-radius:50%; background:#fffdf5; box-shadow:0 1px 5px #26374620; position:relative; }
 .idea-node .idea-dot { overflow:visible; }
