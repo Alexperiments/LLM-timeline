@@ -107,7 +107,7 @@ export default function Home() {
   return (
     <main className={`observatory ${selected ? 'lesson-open' : ''}`}>
       <header className="masthead">
-        <h1>LLM Atlas<span className="title-dot">.</span></h1>
+        <h1>LLM Timeline<span className="title-dot">.</span></h1>
         <div className="search-wrap"><Search size={17} aria-hidden="true"/><input aria-label="Search ideas" placeholder="Search ideas" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if(event.key === 'Escape') setQuery(''); }}/>
           {query.trim() && <div className="search-results">{results.length ? results.map(idea => <button key={idea.id} onClick={() => openIdea(idea)}>{idea.title}<small>{idea.track} · {formatIdeaDate(idea.start)}</small></button>) : <p>No matching ideas.</p>}</div>}
         </div>
