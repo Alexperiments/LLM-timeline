@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import ideas, { type Idea } from 'virtual:ideas';
-import { layoutIdeas, formatIdeaDate, laneY } from './idea-content';
+import { layoutIdeas, formatIdeaDate, laneY, type LayoutNode } from './idea-content';
 import { SplitLesson } from './split-lesson';
 import { Slider } from '@/components/ui/slider';
 
@@ -25,11 +25,22 @@ export default function Home() {
   const scene = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState('');
   const lastNode = useRef<string | null>(null);
+  const [openCluster, setOpenCluster] = useState<string | null>(null);
+  const closeCluster = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const sync = () => setSelectedId(new URLSearchParams(location.search).get('idea'));
     window.addEventListener('popstate', sync);
     return () => window.removeEventListener('popstate', sync);
   }, []);
+  useEffect(() => { setOpenCluster(null); }, [range]);
+  useEffect(() => {
+    if (!openCluster) return;
+    const onDown = (event: PointerEvent) => { if (closeCluster.current && !closeCluster.current.contains(event.target as Node)) setOpenCluster(null); };
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpenCluster(null); };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [openCluster]);
   function openIdea(idea: Idea) {
     if (!selected) lastNode.current = idea.id;
     const url = new URL(location.href); url.searchParams.set('idea', idea.id);
@@ -75,6 +86,21 @@ export default function Home() {
     const start = Math.max(MIN, Math.min(max - width, initial[0] + amount));
     setRange([start, start + width]);
   }
+  function handleCluster(node: LayoutNode) {
+    if (node.kind !== 'cluster') return;
+    if (node.expandable) {
+      const values = node.items.map(item => item.start.value);
+      const d = Math.max(DAY, Math.max(...values) - Math.min(...values));
+      const center = (Math.min(...values) + Math.max(...values)) / 2;
+      const span = d / 0.3;
+      const start = Math.max(MIN, center - span / 2);
+      setRange([start, start + span]);
+      setOpenCluster(null);
+    } else {
+      const key = node.items.map(item => item.id).sort().join('|');
+      setOpenCluster(current => current === key ? null : key);
+    }
+  }
   const months = span / (DAY * 30.44);
   const labelCapacity = Math.max(2, Math.floor(contentEnd / 105));
   const step = [1, 2, 3, 6, 12, 24, 60].find(value => months / value <= labelCapacity) ?? 60;
@@ -99,7 +125,7 @@ export default function Home() {
     }
   }
   const layout = layoutIdeas(range, contentEnd, max);
-  const laneHeight = Math.max(150, ...layout.map(lane => lane.rows * 42 + 24));
+  const laneHeight = 150;
   const splitDate = selected ? selected.category === 'Practice' ? (selected.start.value + (selected.end?.value ?? max)) / 2 : selected.start.value : 0;
   const splitOrigin = Math.max(0, Math.min(contentEnd, (splitDate - range[0]) / span * contentEnd));
   const results = query.trim() ? ideas.filter(idea => `${idea.title} ${idea.body} ${idea.track}`.toLowerCase().includes(query.toLowerCase().trim())) : [];
@@ -154,10 +180,24 @@ export default function Home() {
           </svg>
           <div className="ideas-viewport" style={{ width: contentEnd }}>
             {layout.map((lane, laneIndex) => <div className="idea-lane" key={tracks[laneIndex].title} style={{ top: 0, height: '100%' }}>
-              {lane.items.map(({ idea, left, width: nodeWidth, row, anchor }) => {
-                const practice = idea.category === 'Practice';
+              {lane.items.map(node => {
+                const anchor = node.anchor;
                 const fade = Math.max(0, Math.min(1, anchor / Math.max(60, width * .12), (contentEnd-anchor) / 24));
-                return <button id={`idea-${idea.id}`} key={idea.id} aria-label={`${idea.title} · ${formatIdeaDate(idea.start)}`} className={`idea-node ${practice ? 'practice-node' : 'point-node'} ${idea.category === 'Capability landmark' ? 'landmark-node' : ''}`} style={{ left, width: nodeWidth, opacity: practice ? 1 : fade, top: `calc(${laneY(laneIndex, anchor, width)}% + ${(row-(lane.rows-1)/2)*42 * Math.min(1, Math.max(0, anchor / (width*.21)))}px)` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={{ left: anchor < 110 ? 0 : anchor > contentEnd-110 ? 'auto' : undefined, right: anchor > contentEnd-110 ? 0 : undefined, transform: anchor < 110 || anchor > contentEnd-110 ? 'none' : undefined }}>{idea.title}</span></button>;
+                const top = laneY(laneIndex, anchor, width);
+                if (node.kind === 'point') {
+                  return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.start)}`} className={`idea-node point-node ${node.idea.category === 'Capability landmark' ? 'landmark-node' : ''}`} style={{ left: node.left, opacity: fade, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={{ left: anchor < 110 ? 0 : anchor > contentEnd-110 ? 'auto' : undefined, right: anchor > contentEnd-110 ? 0 : undefined, transform: anchor < 110 || anchor > contentEnd-110 ? 'none' : undefined }}>{node.idea.title}</span></button>;
+                }
+                if (node.kind === 'cluster') {
+                  const open = openCluster === node.items.map(item => item.id).sort().join('|');
+                  return <span className="cluster-wrap" key={node.idea.id} style={{ left: node.left, top: `${top}%`, opacity: fade }}>
+                    <button className="idea-node point-node cluster-node" aria-label={`${node.items.length} ideas, expand`} aria-expanded={open} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => handleCluster(node)}><span className="idea-dot" aria-hidden="true"/><span className="cluster-count">{node.items.length}</span></button>
+                    {open && <div className="cluster-dropdown" ref={closeCluster} onPointerDown={event => event.stopPropagation()}>
+                      <button className="cluster-close" aria-label="Close" onClick={() => setOpenCluster(null)}>×</button>
+                      <ul>{node.items.map(item => <li key={item.id}><button onClick={() => openIdea(item)}><span className="cluster-item-title">{item.title}</span><small>{item.category}</small></button></li>)}</ul>
+                    </div>}
+                  </span>;
+                }
+                return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.start)}`} className={`idea-node practice-node`} style={{ left: node.left, width: node.width, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={{ left: anchor < 110 ? 0 : anchor > contentEnd-110 ? 'auto' : undefined, right: anchor > contentEnd-110 ? 0 : undefined, transform: anchor < 110 || anchor > contentEnd-110 ? 'none' : undefined }}>{node.idea.title}</span></button>;
               })}
             </div>)}
           </div>

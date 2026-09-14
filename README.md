@@ -1,5 +1,5 @@
 # LLM Timeline
 
 ## TODO
-- [] Handle crowded ideas areas, creating a bigger idea placeholder with the number of ideas in the region of the timeline. When clicked the timeline will zoom on that time range to make the ideas inside it visible singularly. 
+- [x] Handle crowded ideas areas: overlapping punctual ideas collapse into an aggregated node showing their count; clicking zooms the timeline to expand them, or shows a dropdown when they cannot be separated (e.g. same day).
 - [] Design the practice idea visualization

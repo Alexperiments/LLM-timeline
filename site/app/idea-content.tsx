@@ -23,23 +23,49 @@ export function laneY(lane: number, x: number, surfaceWidth: number) {
   return (253 * ((1-t)**3 + 3*(1-t)**2*t) + end * (3*(1-t)*t*t + t**3)) / 510 * 100;
 }
 
+export type LayoutNode =
+  | { kind: 'point'; idea: Idea; left: number; anchor: number }
+  | { kind: 'practice'; idea: Idea; left: number; width: number; anchor: number }
+  | { kind: 'cluster'; idea: Idea; left: number; anchor: number; items: Idea[]; expandable: boolean };
+
+// Punctual idea nodes sit on the lane's middle line. Overlapping ones collapse into a
+// single aggregated node showing their count; clicking it zooms in to separate them,
+// or reveals a dropdown when they cannot be separated (e.g. all on the same day).
+const OVERLAP_PX = 56;
+
 export function layoutIdeas(range: number[], width: number, now: number) {
   const scale = (value: number) => (value - range[0]) / (range[1] - range[0]) * width;
   return ['Model architecture', 'Training methods', 'Agent systems'].map(track => {
-    const rowEnds: number[] = [];
-    const items = ideas.filter(idea => idea.track === track).flatMap(idea => {
-      const practice = idea.category === 'Practice';
-      const end = practice ? (idea.end?.value ?? Math.max(now, idea.start.value)) : idea.start.value;
-      if (end < range[0] || idea.start.value > range[1]) return [];
-      const anchor = scale(practice ? (idea.start.value + end) / 2 : idea.start.value);
-      const itemWidth = practice ? Math.max(44, Math.min(width, scale(end)) - Math.max(0, scale(idea.start.value))) : Math.min(44, width);
-      const left = practice ? Math.max(0, Math.min(width - itemWidth, scale(idea.start.value))) : anchor - itemWidth / 2;
-      let row = rowEnds.findIndex(right => right + 12 <= left);
-      if (row === -1) row = rowEnds.length;
-      rowEnds[row] = left + itemWidth;
-      return [{ idea, left, width: itemWidth, row, anchor }];
+    const items: LayoutNode[] = [];
+    const punct = ideas
+      .filter(idea => idea.track === track && idea.category !== 'Practice' && idea.start.value <= range[1])
+      .map(idea => ({ idea, anchor: scale(idea.start.value) }))
+      .sort((a, b) => a.anchor - b.anchor);
+    const clusters: { idea: Idea; anchor: number }[][] = [];
+    for (const point of punct) {
+      const last = clusters[clusters.length - 1];
+      if (last && point.anchor - last[last.length - 1].anchor <= OVERLAP_PX) last.push(point);
+      else clusters.push([point]);
+    }
+    for (const cluster of clusters) {
+      if (cluster.length === 1) {
+        const point = cluster[0];
+        items.push({ kind: 'point', idea: point.idea, left: point.anchor - 22, anchor: point.anchor });
+      } else {
+        const anchor = cluster.reduce((sum, point) => sum + point.anchor, 0) / cluster.length;
+        const expandable = new Set(cluster.map(point => point.idea.start.value)).size > 1;
+        items.push({ kind: 'cluster', idea: cluster[0].idea, left: anchor - 22, anchor, items: cluster.map(point => point.idea), expandable });
+      }
+    }
+    ideas.filter(idea => idea.track === track && idea.category === 'Practice').forEach(idea => {
+      const end = idea.end?.value ?? Math.max(now, idea.start.value);
+      if (end < range[0] || idea.start.value > range[1]) return;
+      const anchor = scale((idea.start.value + end) / 2);
+      const itemWidth = Math.max(44, Math.min(width, scale(end)) - Math.max(0, scale(idea.start.value)));
+      const left = Math.max(0, Math.min(width - itemWidth, scale(idea.start.value)));
+      items.push({ kind: 'practice', idea, left, width: itemWidth, anchor });
     });
-    return { items, rows: rowEnds.length };
+    return { items, rows: 1 };
   });
 }
 
