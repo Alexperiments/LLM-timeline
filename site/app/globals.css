@@ -96,8 +96,10 @@ html,body,#root { height:100%; overflow:hidden; }
 .idea-node:hover,.idea-node:focus-visible { background:transparent; box-shadow:none; z-index:5; }
 .idea-dot { display:block; width:18px; height:18px; border-radius:50%; background:#fffdf5; box-shadow:0 1px 5px #26374620; position:relative; }
 .idea-node .idea-dot { overflow:visible; }
-.point-node .idea-dot { animation:idea-breathe 3.2s ease-in-out infinite; }
+.point-node .idea-dot { scale:1; transition:scale .2s ease; animation:idea-breathe 3.2s ease-in-out infinite; }
 .point-node .idea-dot::after { content:''; position:absolute; inset:-1px; border:1px solid #fffdf5b0; border-radius:50%; opacity:0; pointer-events:none; animation:idea-pulse 3.2s ease-out infinite; }
+.point-node:is(:hover,:focus-visible) .idea-dot { scale:1.2; animation-duration:1.4s; }
+.point-node:is(:hover,:focus-visible) .idea-dot::after { animation-duration:1.4s; }
 .landmark-node .idea-dot { outline:2px solid #fffdf570; outline-offset:3px; }
 .idea-tooltip { position:absolute; bottom:calc(100% + 7px); left:50%; transform:translateX(-50%); width:max-content; max-width:210px; white-space:normal!important; padding:10px 14px; background:#263746; color:#fffdf5; border-radius:5px; font:14px/1.4 Georgia,serif; box-shadow:0 4px 16px #26374630; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .16s,visibility .16s; }
 .idea-node:hover .idea-tooltip,.idea-node:focus-visible .idea-tooltip { opacity:1; visibility:visible; }
