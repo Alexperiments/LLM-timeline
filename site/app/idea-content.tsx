@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Dialog } from '@base-ui/react/dialog';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
@@ -32,8 +32,8 @@ export function layoutIdeas(range: number[], width: number, now: number) {
       const end = practice ? (idea.end?.value ?? Math.max(now, idea.start.value)) : idea.start.value;
       if (end < range[0] || idea.start.value > range[1]) return [];
       const anchor = scale(practice ? (idea.start.value + end) / 2 : idea.start.value);
-      const itemWidth = practice ? Math.max(44, Math.min(width, scale(end)) - Math.max(0, scale(idea.start.value))) : Math.min(150, width);
-      const left = Math.max(0, Math.min(width - itemWidth, practice ? scale(idea.start.value) : anchor - itemWidth / 2));
+      const itemWidth = practice ? Math.max(44, Math.min(width, scale(end)) - Math.max(0, scale(idea.start.value))) : Math.min(44, width);
+      const left = practice ? Math.max(0, Math.min(width - itemWidth, scale(idea.start.value))) : anchor - itemWidth / 2;
       let row = rowEnds.findIndex(right => right + 12 <= left);
       if (row === -1) row = rowEnds.length;
       rowEnds[row] = left + itemWidth;
@@ -43,26 +43,29 @@ export function layoutIdeas(range: number[], width: number, now: number) {
   });
 }
 
-export function Lesson({ idea, onClose, onSelect }: { idea: Idea | undefined; onClose: () => void; onSelect: (idea: Idea) => void }) {
+export function Lesson({ idea, onClose, onSelect, container }: { container: RefObject<HTMLDivElement | null>; idea: Idea | undefined; onClose: () => void; onSelect: (idea: Idea) => void }) {
   const body = useRef<HTMLDivElement>(null);
   useEffect(() => { if(body.current) body.current.scrollTop = 0; }, [idea?.id]);
   const siblings = ideas.filter(item => item.track === idea?.track);
   const index = siblings.findIndex(item => item.id === idea?.id);
   return <Dialog.Root open={!!idea} onOpenChange={open => { if(!open) onClose(); }}>
-    <Dialog.Portal>
-      <Dialog.Backdrop className="lesson-backdrop"/>
-      <Dialog.Popup className="lesson-page">
+
+      <Dialog.Portal container={container}>
+      <Dialog.Popup className="lesson-dialog-frame" aria-describedby={undefined}>
         {idea && <>
+          <div className="lesson-page">
           <header className="lesson-top"><button onClick={onClose} aria-label="Back to timeline"><ArrowLeft size={20}/> Timeline</button><span>{idea.track}</span></header>
           <div className="lesson-scroll" ref={body}>
             <p className="lesson-meta">{idea.category} · {idea.category === 'Practice' ? 'Starting date' : 'Date'}: {formatIdeaDate(idea.start)}{idea.category === 'Practice' && ` — ${idea.end ? formatIdeaDate(idea.end) : 'ongoing'}`}</p>
             <Dialog.Title className="lesson-title">{idea.title}</Dialog.Title>
             <article className="lesson-prose"><ReactMarkdown>{idea.body || 'This lesson has not been written yet.'}</ReactMarkdown></article>
           </div>
+          </div>
           <button className="lesson-prev" disabled={index <= 0} onClick={() => onSelect(siblings[index-1])} aria-label="Previous idea on this track"><ArrowLeft/></button>
           <button className="lesson-next" disabled={index >= siblings.length-1} onClick={() => onSelect(siblings[index+1])} aria-label="Next idea on this track"><ArrowRight/></button>
         </>}
       </Dialog.Popup>
-    </Dialog.Portal>
+      </Dialog.Portal>
+
   </Dialog.Root>;
 }

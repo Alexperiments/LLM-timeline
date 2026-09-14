@@ -81,3 +81,59 @@ h1 { font:30px Georgia,serif; margin:0; letter-spacing:-1px; }
 .lesson-prev,.lesson-next { position:absolute; top:50%; width:44px; height:44px; display:grid; place-items:center; border-radius:50%; border:1px solid #c9d2d3; background:var(--background); cursor:pointer; } .lesson-prev { left:-6vw; } .lesson-next { right:-6vw; } .lesson-prev:disabled,.lesson-next:disabled { opacity:.4; cursor:default; }
 @keyframes lesson-unfold { from { clip-path:inset(0 50%); } to { clip-path:inset(0 0); } }
 @media(max-width:600px) { .lesson-page { inset:0 9%; } .lesson-prev { left:-9vw; width:32px; } .lesson-next { right:-9vw; width:32px; } .lesson-top { padding:22px 5%; } .lesson-top>span { display:none; } .lesson-scroll { padding:30px 6%; } }
+
+/* A fixed instrument surface: the lesson owns its only vertical scrollbar. */
+html,body,#root { height:100%; overflow:hidden; }
+.observatory { height:100svh; min-height:0; }
+.masthead { flex-shrink:0; }
+.navigator { flex-shrink:0; }
+.timeline-shell { position:relative; min-height:0; padding-top:0; overflow:hidden; }
+.timeline-scene { height:100%; min-height:0; display:flex; flex-direction:column; padding-top:28px; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; }
+.timeline-scene .timeline { flex:0 0 auto; min-height:450px; }
+.date-heading { flex-shrink:0; }
+.ideas-viewport { overflow:visible; clip-path:inset(-60px 0 -20px 0); }
+.idea-node { height:44px; padding:0; background:transparent; border:0; box-shadow:none; border-radius:50%; display:grid; place-items:center; }
+.idea-node:hover,.idea-node:focus-visible { background:transparent; box-shadow:none; z-index:5; }
+.idea-dot { display:block; width:18px; height:18px; border-radius:50%; background:#fffdf5; box-shadow:0 1px 5px #26374620; position:relative; }
+.idea-dot::after { content:''; position:absolute; inset:-1px; border:1px solid #fffdf5b0; border-radius:50%; animation:idea-pulse 2.6s ease-out infinite; }
+.landmark-node .idea-dot { outline:2px solid #fffdf570; outline-offset:3px; }
+.idea-tooltip { position:absolute; bottom:calc(100% + 7px); left:50%; transform:translateX(-50%); width:max-content; max-width:210px; white-space:normal!important; padding:10px 14px; background:#263746; color:#fffdf5; border-radius:5px; font:14px/1.4 Georgia,serif; box-shadow:0 4px 16px #26374630; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .16s,visibility .16s; }
+.idea-node:hover .idea-tooltip,.idea-node:focus-visible .idea-tooltip { opacity:1; visibility:visible; }
+.practice-node { border-radius:0; }
+.practice-node::before { content:''; position:absolute; left:0; right:0; top:20px; height:4px; border-radius:4px; background:#fffdf5; }
+.practice-node .idea-dot { width:10px; height:10px; }
+@keyframes idea-pulse { 0% { transform:scale(1); opacity:.7; } 85%,100% { transform:scale(2.3); opacity:0; } }
+.split-stage { position:absolute; inset:0; z-index:15; overflow:hidden; background:var(--background); }
+.split-half { position:absolute; top:0; height:100%; overflow:hidden; pointer-events:none; transition:transform 550ms cubic-bezier(.65,0,.25,1); }
+.split-half .ribbons { animation:none; }
+.split-half .idea-tooltip,.split-half .cursor-guide { visibility:hidden; }
+.split-half .idea-dot::after { animation:none; }
+.lesson-page { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; background:var(--background); box-shadow:none; animation:none; clip-path:inset(0 var(--split-right) 0 var(--split-x)); transition:clip-path 550ms cubic-bezier(.65,0,.25,1); padding:0 var(--edge); pointer-events:none; }
+.is-expanded .lesson-page { clip-path:inset(0 var(--edge)); pointer-events:auto; }
+.lesson-top { margin:0 3%; padding:20px 3%; flex-shrink:0; }
+.lesson-scroll { min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; padding:35px max(6%,calc((100% - 720px)/2)); }
+.lesson-top,.lesson-scroll { opacity:0; transition:opacity 200ms ease; }
+.is-expanded .lesson-top,.is-expanded .lesson-scroll { opacity:1; transition-delay:250ms; }
+.lesson-prev,.lesson-next { position:fixed; top:50%; z-index:4; }
+.lesson-prev { left:calc(var(--edge)/2 - 22px); }
+.lesson-next { right:calc(var(--edge)/2 - 22px); }
+/* Arrows are separate from the opening page clip so they sit on the visible margins. */
+.lesson-page { overflow:visible; }
+@media(max-width:600px) {
+  .masthead { min-height:68px; }
+  .navigator { margin-top:20px; margin-bottom:12px; }
+  .timeline-scene { padding-top:18px; }
+  .date-heading { margin-bottom:38px; }
+  .lesson-top { padding:16px 3%; }
+  .lesson-scroll { padding:24px 6%; }
+  .lesson-prev,.lesson-next { width:30px; height:38px; }
+  .lesson-prev { left:calc(var(--edge)/2 - 15px); }
+  .lesson-next { right:calc(var(--edge)/2 - 15px); }
+}
+.lesson-dialog-frame { position:absolute; inset:0; z-index:2; outline:none; pointer-events:none; }
+.lesson-dialog-frame .lesson-page { position:absolute; }
+.lesson-dialog-frame .lesson-prev,.lesson-dialog-frame .lesson-next { position:absolute; opacity:0; pointer-events:none; transition:opacity .2s; }
+.is-expanded .lesson-dialog-frame .lesson-prev,.is-expanded .lesson-dialog-frame .lesson-next { opacity:1; pointer-events:auto; transition-delay:.3s; }
+.idea-node:focus-visible { opacity:1!important; }
+
+.split-half .timeline-scene { overflow:hidden; }

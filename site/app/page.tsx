@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import ideas, { type Idea } from 'virtual:ideas';
-import { Lesson, layoutIdeas, formatIdeaDate, laneY } from './idea-content';
+import { layoutIdeas, formatIdeaDate, laneY } from './idea-content';
+import { SplitLesson } from './split-lesson';
 import { Slider } from '@/components/ui/slider';
 
 const DAY = 86_400_000;
@@ -20,6 +21,8 @@ export default function Home() {
   const [range, setRange] = useState([MIN, MAX]);
   const [selectedId, setSelectedId] = useState(() => new URLSearchParams(location.search).get('idea'));
   const selected = ideas.find(idea => idea.id === selectedId);
+  const [splitBusy, setSplitBusy] = useState(false);
+  const scene = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState('');
   const lastNode = useRef<string | null>(null);
   useEffect(() => {
@@ -35,8 +38,11 @@ export default function Home() {
   function closeLesson() {
     const url = new URL(location.href); url.searchParams.delete('idea');
     history.pushState({}, '', url); setSelectedId(null);
-    requestAnimationFrame(() => document.getElementById(`idea-${lastNode.current}`)?.focus({ preventScroll: true }));
+
   }
+  useEffect(() => {
+    if (!splitBusy && lastNode.current) document.getElementById(`idea-${lastNode.current}`)?.focus({ preventScroll: true });
+  }, [splitBusy]);
   const [width, setWidth] = useState(1000);
   const surface = useRef<HTMLDivElement>(null);
   const labels = useRef<HTMLDivElement>(null);
@@ -84,7 +90,9 @@ export default function Home() {
   }
   const detailed = step < 12;
   const layout = layoutIdeas(range, contentEnd, max);
-  const laneHeight = Math.max(130, ...layout.map(lane => lane.rows * 42 + 24));
+  const laneHeight = Math.max(150, ...layout.map(lane => lane.rows * 42 + 24));
+  const splitDate = selected ? selected.category === 'Practice' ? (selected.start.value + (selected.end?.value ?? max)) / 2 : selected.start.value : 0;
+  const splitOrigin = Math.max(0, Math.min(contentEnd, (splitDate - range[0]) / span * contentEnd));
   const results = query.trim() ? ideas.filter(idea => `${idea.title} ${idea.body} ${idea.track}`.toLowerCase().includes(query.toLowerCase().trim())) : [];
 
   return (
@@ -97,8 +105,9 @@ export default function Home() {
       </header>
 
       <section className="timeline-shell" aria-label="Timeline explorer">
-        <div className="date-heading" style={{ marginRight: Math.max(0, width - contentEnd) }}><div><span className="eyebrow">FROM</span><p>{dateLabel(range[0], detailed)}</p></div><div className="date-end"><span className="eyebrow">TO</span><p>{dateLabel(range[1], detailed)}</p></div></div>
-        <div ref={surface} className="timeline" style={{ minHeight: laneHeight * 3 }} tabIndex={0} role="region" aria-label="Timeline. Drag or use left and right arrow keys to navigate."
+        <div ref={scene} className="timeline-scene" style={{ visibility: selected || splitBusy ? 'hidden' : 'visible' }} inert={!!selected || splitBusy}>
+        <div className="date-heading" style={{ marginRight: Math.max(0, width - contentEnd) }}><div><p>{dateLabel(range[0], detailed)}</p></div><div className="date-end"><p>{dateLabel(range[1], detailed)}</p></div></div>
+        <div ref={surface} className="timeline" style={{ height: laneHeight * 3, minHeight: laneHeight * 3 }} tabIndex={0} role="region" aria-label="Timeline. Drag or use left and right arrow keys to navigate."
           onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); pan(event.key === 'ArrowLeft' ? -span / 10 : span / 10); } }}
           onWheel={event => { if (event.clientX - event.currentTarget.getBoundingClientRect().left <= contentEnd) pan((event.deltaX || event.deltaY) * span / Math.max(1, contentEnd)); }}
           onPointerDown={event => { if((event.target as HTMLElement).closest('button') || event.button !== 0 || event.clientX - event.currentTarget.getBoundingClientRect().left > contentEnd) return; drag.current = { x: event.clientX, range: [...range] }; event.currentTarget.setPointerCapture(event.pointerId); }}
@@ -136,15 +145,21 @@ export default function Home() {
           </svg>
           <div className="ideas-viewport" style={{ width: contentEnd }}>
             {layout.map((lane, laneIndex) => <div className="idea-lane" key={tracks[laneIndex].title} style={{ top: 0, height: '100%' }}>
-              {lane.items.map(({ idea, left, width: nodeWidth, row, anchor }) => <button id={`idea-${idea.id}`} key={idea.id} className={`idea-node ${idea.category === 'Practice' ? 'practice-node' : ''} ${idea.category === 'Capability landmark' ? 'landmark-node' : ''}`} style={{ left, width: nodeWidth, top: `calc(${laneY(laneIndex, anchor, width)}% + ${(row-(lane.rows-1)/2)*42}px)` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(idea)} title={`${idea.title} · ${formatIdeaDate(idea.start)}`}><span>{idea.title}</span></button>)}
+              {lane.items.map(({ idea, left, width: nodeWidth, row, anchor }) => {
+                const practice = idea.category === 'Practice';
+                const fade = Math.max(0, Math.min(1, anchor / Math.max(60, width * .12), (contentEnd-anchor) / 24));
+                return <button id={`idea-${idea.id}`} key={idea.id} aria-label={`${idea.title} · ${formatIdeaDate(idea.start)}`} className={`idea-node ${practice ? 'practice-node' : 'point-node'} ${idea.category === 'Capability landmark' ? 'landmark-node' : ''}`} style={{ left, width: nodeWidth, opacity: practice ? 1 : fade, top: `calc(${laneY(laneIndex, anchor, width)}% + ${(row-(lane.rows-1)/2)*42 * Math.min(1, Math.max(0, anchor / (width*.21)))}px)` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={{ left: anchor < 110 ? 0 : anchor > contentEnd-110 ? 'auto' : undefined, right: anchor > contentEnd-110 ? 0 : undefined, transform: anchor < 110 || anchor > contentEnd-110 ? 'none' : undefined }}>{idea.title}</span></button>;
+              })}
             </div>)}
           </div>
           <div ref={labels} className="track-labels">{tracks.map(track => <div className={`track-label ${track.color}`} key={track.color}><h2>{track.title.split(' ')[0]}<br/>{track.title.split(' ').slice(1).join(' ')}</h2></div>)}</div>
           {cursor !== null && <div className="cursor-guide" style={{left: cursor * contentEnd}}><span style={{ transform: cursor > .9 ? 'translateX(-100%)' : cursor < .1 ? 'none' : undefined }}>{dateLabel(range[0]+cursor*span, true)}</span></div>}
         </div>
+        </div>
+        <SplitLesson idea={selected} scene={scene} origin={splitOrigin} onClose={closeLesson} onSelect={openIdea} onBusy={setSplitBusy}/>
       </section>
 
-      <div className="navigator" ref={scroller}>
+      <div className="navigator" ref={scroller} inert={!!selected || splitBusy}>
         <Slider className="time-slider" aria-label="Visible date range" min={MIN} max={max} step={DAY} minStepsBetweenValues={14} value={range} onValueChange={value => setRange(Array.isArray(value) ? value : [value, range[1]])}/>
         <div className="range-pan" role="slider" tabIndex={0} aria-label="Move visible date range" aria-valuemin={MIN} aria-valuemax={max-span} aria-valuenow={range[0]} aria-valuetext={`${dateLabel(range[0], true)} to ${dateLabel(range[1], true)}`} style={{left: `calc(${(range[0]-MIN)/(max-MIN)*100}% + 24px)`, width: `max(0px, calc(${span/(max-MIN)*100}% - 48px))`}}
           onKeyDown={event => { if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); pan(event.key === 'ArrowLeft' ? -span/10 : span/10); } }}
@@ -152,7 +167,6 @@ export default function Home() {
           onPointerMove={event => { if(selectionDrag.current && scroller.current) pan((event.clientX-selectionDrag.current.x)/scroller.current.clientWidth*(max-MIN), selectionDrag.current.range); }}
           onPointerUp={() => { selectionDrag.current = null; }} onPointerCancel={() => { selectionDrag.current = null; }}/>
       </div>
-      <Lesson idea={selected} onClose={closeLesson} onSelect={openIdea}/>
     </main>
   );
 }
