@@ -95,19 +95,22 @@ html,body,#root { height:100%; overflow:hidden; }
 .idea-node { height:44px; padding:0; background:transparent; border:0; box-shadow:none; border-radius:50%; display:grid; place-items:center; }
 .idea-node:hover,.idea-node:focus-visible { background:transparent; box-shadow:none; z-index:5; }
 .idea-dot { display:block; width:18px; height:18px; border-radius:50%; background:#fffdf5; box-shadow:0 1px 5px #26374620; position:relative; }
-.idea-dot::after { content:''; position:absolute; inset:-1px; border:1px solid #fffdf5b0; border-radius:50%; animation:idea-pulse 2.6s ease-out infinite; }
+.idea-node .idea-dot { overflow:visible; }
+.point-node .idea-dot { animation:idea-breathe 3.2s ease-in-out infinite; }
+.point-node .idea-dot::after { content:''; position:absolute; inset:-1px; border:1px solid #fffdf5b0; border-radius:50%; opacity:0; pointer-events:none; animation:idea-pulse 3.2s ease-out infinite; }
 .landmark-node .idea-dot { outline:2px solid #fffdf570; outline-offset:3px; }
 .idea-tooltip { position:absolute; bottom:calc(100% + 7px); left:50%; transform:translateX(-50%); width:max-content; max-width:210px; white-space:normal!important; padding:10px 14px; background:#263746; color:#fffdf5; border-radius:5px; font:14px/1.4 Georgia,serif; box-shadow:0 4px 16px #26374630; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .16s,visibility .16s; }
 .idea-node:hover .idea-tooltip,.idea-node:focus-visible .idea-tooltip { opacity:1; visibility:visible; }
 .practice-node { border-radius:0; }
 .practice-node::before { content:''; position:absolute; left:0; right:0; top:20px; height:4px; border-radius:4px; background:#fffdf5; }
 .practice-node .idea-dot { width:10px; height:10px; }
-@keyframes idea-pulse { 0% { transform:scale(1); opacity:.7; } 85%,100% { transform:scale(2.3); opacity:0; } }
+@keyframes idea-breathe { 0%,100% { transform:scale(1); } 35% { transform:scale(1.1); } }
+@keyframes idea-pulse { 0% { transform:scale(1); opacity:.55; } 75%,100% { transform:scale(2.2); opacity:0; } }
 .split-stage { position:absolute; inset:0; z-index:15; overflow:hidden; background:var(--background); }
 .split-half { position:absolute; top:0; height:100%; overflow:hidden; pointer-events:none; transition:transform 550ms cubic-bezier(.65,0,.25,1); }
 .split-half .ribbons { animation:none; }
 .split-half .idea-tooltip,.split-half .cursor-guide { visibility:hidden; }
-.split-half .idea-dot::after { animation:none; }
+.split-half .idea-dot,.split-half .idea-dot::after { animation:none; }
 .lesson-page { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; background:var(--background); box-shadow:none; animation:none; clip-path:inset(0 var(--split-right) 0 var(--split-x)); transition:clip-path 550ms cubic-bezier(.65,0,.25,1); padding:0 var(--edge); pointer-events:none; }
 .is-expanded .lesson-page { clip-path:inset(0 var(--edge)); pointer-events:auto; }
 .lesson-top { margin:0 3%; padding:20px 3%; flex-shrink:0; }
