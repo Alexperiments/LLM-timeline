@@ -39,13 +39,13 @@ h1 { font:30px Georgia,serif; margin:0; letter-spacing:-1px; }
 .time-slider [data-slot=slider-thumb] { z-index:3; height:var(--thumb-size); width:var(--thumb-size); background:#3c3c3c; border:0; border-radius:50%; box-shadow:none; cursor:ew-resize; transform-origin:center; transition:background .16s,scale .25s; }
 .time-slider [data-slot=slider-thumb][data-index="0"] { inset-inline-start:var(--slider-thumb-start,0%)!important; translate:0 -50% !important; }
 .time-slider [data-slot=slider-thumb][data-index="1"] { inset-inline-start:var(--slider-thumb-end,100%)!important; translate:-100% -50% !important; }
-.time-slider [data-slot=slider-thumb][data-index="0"] { transform-origin:right center; }
-.time-slider [data-slot=slider-thumb][data-index="1"] { transform-origin:left center; }
+.time-slider [data-slot=slider-thumb][data-index="0"] { transform-origin:var(--slider-thumb-start-origin,right center); }
+.time-slider [data-slot=slider-thumb][data-index="1"] { transform-origin:var(--slider-thumb-end-origin,left center); }
 .navigator:hover .time-slider [data-slot=slider-thumb] { scale:var(--thumb-expanded-scale); }
 .time-slider [data-slot=slider-thumb]::before { content:''; position:absolute; top:50%; left:50%; translate:-50% -50%; height:50%; width:2px; background:#f0ebe2; box-shadow:5px 0 0 #f0ebe2,-5px 0 0 #f0ebe2; }
 .time-slider [data-slot=slider-thumb]:hover,.time-slider [data-slot=slider-thumb]:active { background:#ffffff; }
 .time-slider [data-slot=slider-thumb]:hover::before,.time-slider [data-slot=slider-thumb]:active::before { background:#3c3c3c; box-shadow:5px 0 0 #3c3c3c,-5px 0 0 #3c3c3c; }
-.range-pan { position:absolute; top:0; height:100%; cursor:grab; touch-action:none; border-radius:0; transition:background .16s; }
+.range-pan { position:absolute; top:0; z-index:2; height:100%; cursor:grab; touch-action:none; border-radius:0; transition:background .16s; }
 .range-pan:hover { background:#ffffff12; }
 .range-pan:active { cursor:grabbing; background:#ffffff24; }
 .range-pan:focus-visible { outline-offset:1px; }
