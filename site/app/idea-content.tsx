@@ -8,19 +8,76 @@ export function formatIdeaDate(date: IdeaDate) {
   return new Intl.DateTimeFormat('en', { timeZone: 'UTC', year: 'numeric', ...(date.precision !== 'year' ? { month: 'long' as const } : {}), ...(date.precision === 'day' ? { day: 'numeric' as const } : {}) }).format(date.value);
 }
 
+const VIEWBOX_WIDTH = 1440;
+const VIEWBOX_HEIGHT = 510;
+const BEND_END_X = 300;
+const LANE_HALF_WIDTH = 75;
+const CURVE_SAMPLES = 64;
+const LANE_ENDS = [90, 253, 420] as const;
+
+type Point = { x: number; y: number };
+
+function centerlinePoint(end: number, t: number): Point {
+  const inverse = 1 - t;
+  return {
+    x: 3 * inverse ** 2 * t * 120 + 3 * inverse * t ** 2 * 142 + t ** 3 * BEND_END_X,
+    y: inverse ** 3 * 253 + 3 * inverse ** 2 * t * 253 + 3 * inverse * t ** 2 * end + t ** 3 * end,
+  };
+}
+
+function centerlineTangent(end: number, t: number): Point {
+  const inverse = 1 - t;
+  return {
+    x: 3 * (inverse ** 2 * 120 + 2 * inverse * t * (142 - 120) + t ** 2 * (BEND_END_X - 142)),
+    y: 6 * inverse * t * (end - 253),
+  };
+}
+
+function formatSvgNumber(value: number) {
+  return Number(value.toFixed(2)).toString();
+}
+
+// Build each ribbon from parallel offsets of its centerline. Keeping the offsets
+// perpendicular to the tangent prevents the lane from narrowing through the bend.
+function ribbonPath(end: number) {
+  const upper: Point[] = [];
+  const lower: Point[] = [];
+  for (let index = 0; index <= CURVE_SAMPLES; index++) {
+    const t = index / CURVE_SAMPLES;
+    const point = centerlinePoint(end, t);
+    const tangent = centerlineTangent(end, t);
+    const length = Math.hypot(tangent.x, tangent.y);
+    const normal = { x: -tangent.y / length, y: tangent.x / length };
+    upper.push({ x: point.x - normal.x * LANE_HALF_WIDTH, y: point.y - normal.y * LANE_HALF_WIDTH });
+    lower.push({ x: point.x + normal.x * LANE_HALF_WIDTH, y: point.y + normal.y * LANE_HALF_WIDTH });
+  }
+  const pointPath = (point: Point) => `L${formatSvgNumber(point.x)} ${formatSvgNumber(point.y)}`;
+  const upperEnd = upper[upper.length - 1];
+  const lowerEnd = lower[lower.length - 1];
+  return [
+    `M${formatSvgNumber(upper[0].x)} ${formatSvgNumber(upper[0].y)}`,
+    ...upper.slice(1).map(pointPath),
+    `L${VIEWBOX_WIDTH} ${formatSvgNumber(upperEnd.y)}`,
+    `L${VIEWBOX_WIDTH} ${formatSvgNumber(lowerEnd.y)}`,
+    ...lower.slice().reverse().map(pointPath),
+    'Z',
+  ].join(' ');
+}
+
+export const ribbonPaths = LANE_ENDS.map(ribbonPath);
+
 // Follow the same cubic centerlines used by the ribbon SVG, including its curved origin.
 export function laneY(lane: number, x: number, surfaceWidth: number) {
-  const target = Math.max(0, x / Math.max(1, surfaceWidth) * 1440);
-  const end = [90, 253, 420][lane];
-  if (target >= 300 || lane === 1) return end / 510 * 100;
+  const target = Math.max(0, x / Math.max(1, surfaceWidth) * VIEWBOX_WIDTH);
+  const end = LANE_ENDS[lane] ?? LANE_ENDS[1];
+  if (target >= BEND_END_X || lane === 1) return end / VIEWBOX_HEIGHT * 100;
   let low = 0, high = 1;
   for (let i = 0; i < 24; i++) {
     const t = (low + high) / 2;
-    const px = 3 * (1-t)**2 * t * 120 + 3 * (1-t) * t*t * 142 + t**3 * 300;
-    if (px < target) low = t; else high = t;
+    if (centerlinePoint(end, t).x < target) low = t; else high = t;
   }
   const t = (low + high) / 2;
-  return (253 * ((1-t)**3 + 3*(1-t)**2*t) + end * (3*(1-t)*t*t + t**3)) / 510 * 100;
+  return centerlinePoint(end, t).y / VIEWBOX_HEIGHT * 100;
 }
 
 export type LayoutNode =

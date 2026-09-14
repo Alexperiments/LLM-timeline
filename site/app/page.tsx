@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import ideas, { type Idea } from 'virtual:ideas';
-import { layoutIdeas, formatIdeaDate, laneY, type LayoutNode } from './idea-content';
+import { layoutIdeas, formatIdeaDate, laneY, ribbonPaths, type LayoutNode } from './idea-content';
 import { SplitLesson } from './split-lesson';
 import { Slider } from '@/components/ui/slider';
 
@@ -173,9 +173,9 @@ export default function Home() {
               <linearGradient id="blue"><stop stopColor="#7966c6"/><stop offset="1" stopColor="#47a6c4"/></linearGradient>
               <linearGradient id="teal"><stop stopColor="#299ba9"/><stop offset="1" stopColor="#8eba5e"/></linearGradient>
               <linearGradient id="gold"><stop stopColor="#d9805e"/><stop offset="1" stopColor="#dcba4f"/></linearGradient>
-              <path id="architecture-ribbon" d="M0 173 C108 173 141 15 300 15 H1440 V165 H300 C145 165 110 333 0 333Z"/>
-              <path id="training-ribbon" d="M0 173 C110 173 170 180 300 180 H1440 V330 H300 C170 330 110 333 0 333Z"/>
-              <path id="agents-ribbon" d="M0 173 C115 173 150 345 300 345 H1440 V495 H300 C140 495 110 333 0 333Z"/>
+              <path id="architecture-ribbon" d={ribbonPaths[0]}/>
+              <path id="training-ribbon" d={ribbonPaths[1]}/>
+              <path id="agents-ribbon" d={ribbonPaths[2]}/>
               <clipPath id="architecture-clip"><use href="#architecture-ribbon"/></clipPath>
               <clipPath id="training-clip"><use href="#training-ribbon"/></clipPath>
               <clipPath id="agents-clip"><use href="#agents-ribbon"/></clipPath>
