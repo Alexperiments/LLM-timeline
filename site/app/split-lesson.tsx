@@ -28,7 +28,12 @@ export function SplitLesson({ idea, scene, origin, onClose, onSelect, onBusy }: 
     const source = scene.current;
     if (splitRatio.current === null) {
       const marker = Array.from(source.querySelectorAll<HTMLElement>('.idea-node'))
-        .find(node => node.id === `idea-${retained.id}`)
+        .find(node => {
+          if (node.id === `idea-${retained.id}`) return true;
+          if (!node.dataset.ideaIds) return false;
+          try { return (JSON.parse(node.dataset.ideaIds) as string[]).includes(retained.id); }
+          catch { return false; }
+        })
         ?.querySelector<HTMLElement>('.idea-dot');
       const sourceBox = source.getBoundingClientRect();
       const markerBox = marker?.getBoundingClientRect();
