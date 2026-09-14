@@ -26,7 +26,17 @@ export function SplitLesson({ idea, scene, origin, onClose, onSelect, onBusy }: 
   useLayoutEffect(() => {
     if (!retained || !scene.current || !left.current || !right.current) return;
     const source = scene.current;
-    if (splitRatio.current === null) splitRatio.current = Math.max(0, Math.min(1, origin / source.clientWidth));
+    if (splitRatio.current === null) {
+      const marker = Array.from(source.querySelectorAll<HTMLElement>('.idea-node'))
+        .find(node => node.id === `idea-${retained.id}`)
+        ?.querySelector<HTMLElement>('.idea-dot');
+      const sourceBox = source.getBoundingClientRect();
+      const markerBox = marker?.getBoundingClientRect();
+      const measuredOrigin = markerBox
+        ? markerBox.left + markerBox.width / 2 - sourceBox.left
+        : origin;
+      splitRatio.current = Math.max(0, Math.min(1, measuredOrigin / Math.max(1, source.clientWidth)));
+    }
     const update = () => {
       const width = source.clientWidth;
       setGeometry({ width, height: source.clientHeight, split: width * splitRatio.current!, edge: Math.min(80, width * .075) });
