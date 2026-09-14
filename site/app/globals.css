@@ -108,8 +108,8 @@ html,body,#root { height:100%; overflow:hidden; }
 .idea-node .idea-dot { overflow:visible; }
 .point-node .idea-dot { scale:1; transition:scale .72s cubic-bezier(.16,1,.3,1),opacity .44s ease .12s; animation:idea-breathe 3.2s ease-in-out infinite; }
 .point-node .idea-dot::after { content:''; position:absolute; inset:-1px; border:1px solid #fffdf5b0; border-radius:50%; opacity:0; pointer-events:none; animation:idea-pulse 3.2s ease-out infinite; }
-.point-node:is(:hover,:focus-visible) .idea-dot { opacity:0; scale:.82; animation-duration:4.2s; transition-delay:.08s; }
-.point-node:is(:hover,:focus-visible) .idea-dot::after { animation-duration:4.2s; }
+.point-node:not(.cluster-node):is(:hover,:focus-visible) .idea-dot { opacity:0; scale:.82; animation-duration:4.2s; transition-delay:.08s; }
+.point-node:not(.cluster-node):is(:hover,:focus-visible) .idea-dot::after { animation-duration:4.2s; }
 .landmark-node .idea-dot { outline:2px solid #fffdf570; outline-offset:3px; }
 .idea-tooltip { position:absolute; top:50%; bottom:auto; left:50%; transform:translateX(-50%); translate:0 -50%; width:max-content; max-width:min(220px,calc(100vw - 32px)); white-space:normal!important; padding:8px 15px; background:#fffdf5; color:#263746; border:1px solid #ffffffb0; border-radius:999px; font:14px/1.25 Georgia,serif; box-shadow:0 2px 8px #26374620; opacity:0; visibility:hidden; pointer-events:none; scale:1; will-change:clip-path,scale,opacity; transition:opacity .38s ease,scale .56s cubic-bezier(.16,1,.3,1),visibility 0s linear .56s; }
 .idea-tooltip::after { content:''; position:absolute; inset:-1px; border:1px solid #fffdf5b0; border-radius:inherit; opacity:0; pointer-events:none; }
