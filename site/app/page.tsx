@@ -270,7 +270,7 @@ export default function Home() {
       </section>
 
       <div className="navigator" ref={scroller} inert={!!selected || splitBusy} style={sliderVisualStyle}>
-        <Slider className="time-slider" aria-label="Visible date range" min={MIN} max={max} step={DAY} minStepsBetweenValues={MAX_ZOOM_DAYS} thumbCollisionBehavior="none" value={range} onValueChange={value => setRange(Array.isArray(value) ? value : [value, range[1]])}/>
+        <Slider className="time-slider" aria-label="Visible date range" min={MIN} max={max} step={DAY} thumbCollisionBehavior="none" value={range} onValueChange={value => setRange(Array.isArray(value) ? value : [value, range[1]])}/>
         <div className="year-labels" aria-hidden="true">{yearLabels.map(({ value, label }) => { const frac = (value - MIN) / (MAX - MIN); const transform = frac < .06 ? 'none' : frac > .94 ? 'translateX(-100%)' : 'translateX(-50%)'; return <span key={value} style={{ left: `${frac * 100}%`, transform }}>{label}</span>; })}</div>
         <div className="range-pan" role="slider" tabIndex={0} aria-label="Move visible date range" aria-valuemin={MIN} aria-valuemax={max-span} aria-valuenow={range[0]} aria-valuetext={`${dateLabel(range[0], true)} to ${dateLabel(range[1], true)}`} style={{left: `${NAVIGATOR_EDGE_INSET + rangeStartFraction * sliderWidth}px`, width: `${Math.max(0, rangeFraction * sliderWidth - NAVIGATOR_EDGE_INSET * 2)}px`}}
           onKeyDown={event => { if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); pan(event.key === 'ArrowLeft' ? -span/10 : span/10); } }}
