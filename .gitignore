@@ -140,4 +140,4 @@ tools/custom-gcl.exe.hash
 .tmp/
 frames/
 *.mp4
-*.md
+prompt.md
