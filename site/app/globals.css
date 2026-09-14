@@ -30,15 +30,19 @@ h1 { font:30px Georgia,serif; margin:0; letter-spacing:-1px; }
 .agents { color:#2f342e; }
 .cursor-guide { position:absolute; top:0; bottom:0; width:1px; background:#202e3870; pointer-events:none; z-index:2; }
 .cursor-guide span { position:absolute; bottom:-20px; left:0; transform:translateX(-50%); background:#263f51; color:white; padding:3px 8px; border-radius:3px; font:12px monospace; white-space:nowrap; }
-.navigator { margin:40px 4% 28px; position:relative; height:64px; user-select:none; -webkit-user-select:none; }
-.time-slider { height:64px; display:flex; align-items:center; position:relative; touch-action:none; }
-.time-slider [data-slot=slider-track] { height:38px!important; background:#dce3e5; border-radius:24px; overflow:visible; box-shadow:inset 0 1px 3px #203e5010; }
-.time-slider [data-slot=slider-range] { background:linear-gradient(100deg,#6389b2 0%,#68a7ae 52%,#b7cda5 100%); border-radius:24px; box-shadow:inset 0 1px 0 #ffffff70,0 2px 8px #294b6012; }
-.time-slider [data-slot=slider-thumb] { z-index:3; height:48px; width:48px; background:#2b4352; border:3px solid var(--background); border-radius:50%; box-shadow:0 2px 6px #20374626,inset 0 0 0 1px #ffffff20; cursor:ew-resize; transition:background .16s,box-shadow .16s; }
-.time-slider [data-slot=slider-thumb]::before { content:''; height:14px; width:8px; border-left:1px solid #dbe9ec; border-right:1px solid #dbe9ec; position:absolute; top:14px; left:17px; }
-.time-slider [data-slot=slider-thumb]::after { inset:0; }
-.time-slider [data-slot=slider-thumb]:hover,.time-slider [data-slot=slider-thumb]:active { background:#1d3646; box-shadow:0 3px 10px #20374630,0 0 0 4px #6398ac24; }
-.range-pan { position:absolute; top:5px; height:54px; cursor:grab; touch-action:none; border-radius:24px; transition:background .16s; }
+.navigator { margin:0; position:relative; height:24px; user-select:none; -webkit-user-select:none; border-top:1px solid var(--border); background:var(--background); transition:height .25s ease; }
+.navigator:hover { height:48px; }
+.time-slider { height:100%; display:flex; align-items:center; position:relative; touch-action:none; }
+.time-slider > div { height:100%; }
+.time-slider [data-slot=slider-track] { height:100%!important; background:transparent; border-radius:0; overflow:visible; }
+.time-slider [data-slot=slider-range] { background:linear-gradient(100deg,#6389b2 0%,#68a7ae 52%,#b7cda5 100%); border-radius:48px; box-shadow:none; }
+.time-slider [data-slot=slider-thumb] { z-index:3; height:calc(100% - 4px); width:auto; aspect-ratio:1/1; background:#3c3c3c; border:0; border-radius:50%; box-shadow:none; cursor:ew-resize; transition:background .16s; }
+.time-slider [data-slot=slider-thumb][data-index="0"] { translate:0 -50% !important; }
+.time-slider [data-slot=slider-thumb][data-index="1"] { translate:-100% -50% !important; }
+.time-slider [data-slot=slider-thumb]::before { content:''; position:absolute; top:50%; left:50%; translate:-50% -50%; height:50%; width:2px; background:#f0ebe2; box-shadow:5px 0 0 #f0ebe2,-5px 0 0 #f0ebe2; }
+.time-slider [data-slot=slider-thumb]:hover,.time-slider [data-slot=slider-thumb]:active { background:#ffffff; }
+.time-slider [data-slot=slider-thumb]:hover::before,.time-slider [data-slot=slider-thumb]:active::before { background:#3c3c3c; box-shadow:5px 0 0 #3c3c3c,-5px 0 0 #3c3c3c; }
+.range-pan { position:absolute; top:0; height:100%; cursor:grab; touch-action:none; border-radius:0; transition:background .16s; }
 .range-pan:hover { background:#ffffff12; }
 .range-pan:active { cursor:grabbing; background:#ffffff24; }
 .range-pan:focus-visible { outline-offset:1px; }
@@ -49,7 +53,7 @@ h1 { font:30px Georgia,serif; margin:0; letter-spacing:-1px; }
   .search-wrap { width:145px; } .search-wrap input { width:115px; }
   .date-heading { margin:0 5% 48px; } .date-heading p { font-size:32px; letter-spacing:-1px; }
   .timeline { min-height:340px; } .track-labels { left:17%; right:5%; }
-  .track-label h2 { font-size:22px; }   .navigator { margin:40px 5% 24px; } .eyebrow {font-size:12px;}
+  .track-label h2 { font-size:22px; }   .navigator { margin:0; } .eyebrow {font-size:12px;}
 }
 @media(prefers-reduced-motion:reduce) { * {animation:none!important;transition:none!important;} }
 
@@ -126,7 +130,7 @@ html,body,#root { height:100%; overflow:hidden; }
 .lesson-page { overflow:visible; }
 @media(max-width:600px) {
   .masthead { min-height:68px; }
-  .navigator { margin-top:20px; margin-bottom:12px; }
+  .navigator { margin:0; }
   .timeline-scene { padding-top:18px; }
   .date-heading { margin-bottom:38px; }
   .lesson-top { padding:16px 3%; }
