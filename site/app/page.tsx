@@ -155,6 +155,13 @@ export default function Home() {
       setOpenCluster(current => current === key ? null : key);
     }
   }
+  function resetTimeline() {
+    if (selected) closeLesson();
+    setQuery('');
+    setOpenCluster(null);
+    setCursor(null);
+    zoomRange([MIN, max]);
+  }
   const months = span / (DAY * 30.44);
   const labelCapacity = Math.max(2, Math.floor(contentEnd / 105));
   const step = [1, 2, 3, 6, 12, 24, 60].find(value => months / value <= labelCapacity) ?? 60;
@@ -186,7 +193,7 @@ export default function Home() {
   return (
     <main className={`observatory ${selected ? 'lesson-open' : ''}`}>
       <header className="masthead">
-        <h1>LLM Timeline<span className="title-dot">.</span></h1>
+        <h1><button type="button" className="timeline-home" onClick={resetTimeline} title="Show the full timeline">LLM Timeline<span className="title-dot">.</span></button></h1>
         <div className="search-wrap"><Search size={17} aria-hidden="true"/><input aria-label="Search ideas" placeholder="Search ideas" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if(event.key === 'Escape') setQuery(''); }}/>
           {query.trim() && <div className="search-results">{results.length ? results.map(idea => <button key={idea.id} onClick={() => openIdea(idea)}>{idea.title}<small>{idea.track} · {formatIdeaDate(idea.start)}</small></button>) : <p>No matching ideas.</p>}</div>}
         </div>
@@ -194,8 +201,18 @@ export default function Home() {
 
       <section className="timeline-shell" aria-label="Timeline explorer">
         <div ref={scene} className="timeline-scene" style={{ visibility: selected || splitBusy ? 'hidden' : 'visible' }} inert={!!selected || splitBusy}>
-        <div className="date-heading" style={{ marginRight: Math.max(0, width - contentEnd) }}><div><p>{dateLabel(range[0], detailed)}</p></div><div className="date-end"><p>{dateLabel(range[1], detailed)}</p></div></div>
-        <div ref={surface} className="timeline" style={{ height: laneHeight * 3, minHeight: laneHeight * 3 }} tabIndex={0} role="region" aria-label="Timeline. Drag or use left and right arrow keys to navigate."
+        <div ref={surface} className="timeline" style={{ height: laneHeight * 3, minHeight: laneHeight * 3 }} tabIndex={0} role="region" aria-label="Timeline. Double-click to zoom in. Drag or use left and right arrow keys to navigate."
+          onDoubleClick={event => {
+            if ((event.target as Element).closest('button')) return;
+            const x = event.clientX - event.currentTarget.getBoundingClientRect().left;
+            if (contentEnd <= 0 || x < 0 || x > contentEnd) return;
+            const fraction = x / contentEnd;
+            const date = range[0] + fraction * span;
+            const nextSpan = Math.max(MAX_ZOOM_SPAN, span / 1.5);
+            // Keep the clicked date under the pointer as the surrounding range contracts.
+            const start = date - fraction * nextSpan;
+            zoomRange([start, start + nextSpan]);
+          }}
           onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); stopZoomAnimation(); pan(event.key === 'ArrowLeft' ? -span / 10 : span / 10); } }}
           onWheel={event => { if (event.clientX - event.currentTarget.getBoundingClientRect().left <= contentEnd) pan((event.deltaX || event.deltaY) * span / Math.max(1, contentEnd)); }}
           onPointerDown={event => { if((event.target as HTMLElement).closest('button') || event.button !== 0 || event.clientX - event.currentTarget.getBoundingClientRect().left > contentEnd) return; drag.current = { x: event.clientX, range: [...range] }; event.currentTarget.setPointerCapture(event.pointerId); }}
@@ -264,7 +281,7 @@ export default function Home() {
         <SplitLesson idea={selected} scene={scene} origin={splitOrigin} onClose={closeLesson} onSelect={openIdea} onBusy={setSplitBusy}/>
       </section>
 
-      <div className={`navigator${navigatorDragging ? ' is-dragging' : ''}`} ref={scroller} inert={!!selected || splitBusy} style={sliderVisualStyle}>
+      <div className={`navigator${navigatorDragging ? ' is-dragging' : ''}`} ref={scroller} inert={!!selected || splitBusy} style={sliderVisualStyle} onDoubleClick={resetTimeline}>
         <div className="time-slider"
           onPointerDown={event => {
             if (event.button !== 0 || thumbDrag.current) return;
