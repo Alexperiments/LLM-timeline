@@ -138,8 +138,8 @@ html,body,#root { height:100%; overflow:hidden; }
 .cluster-wrap .cluster-node { position:relative; transform:none; }
 .cluster-wrap > * { pointer-events:auto; }
 .cluster-count { position:absolute; top:-5px; right:-9px; min-width:20px; height:20px; padding:0 5px; border-radius:10px; background:#263746; color:#fffdf5; font:700 12px/20px Arial,Helvetica,sans-serif; text-align:center; box-shadow:0 1px 4px #26374640; }
-.cluster-dropdown { position:absolute; top:calc(100% + 10px); left:50%; transform:translateX(-50%); min-width:220px; background:var(--background); border:1px solid var(--border); border-radius:6px; box-shadow:0 8px 24px #26374628; z-index:6; padding:6px; }
-.cluster-dropdown ul { list-style:none; margin:0; padding:0; max-height:220px; overflow:auto; }
+.cluster-dropdown { position:fixed; left:0; top:0; transform:translateX(-50%); width:min(320px,calc(100vw - 24px)); min-width:min(220px,calc(100vw - 24px)); max-height:min(280px,calc(100vh - 24px)); background:var(--background); border:1px solid var(--border); border-radius:6px; box-shadow:0 8px 24px #26374628; z-index:1000; padding:6px; }
+.cluster-dropdown ul { list-style:none; margin:0; padding:0; max-height:min(220px,calc(100vh - 80px)); overflow:auto; }
 .cluster-dropdown li { border-bottom:1px solid var(--border); }
 .cluster-dropdown li:last-child { border-bottom:0; }
 .cluster-dropdown li button { display:block; width:100%; background:none; border:0; text-align:left; padding:10px; cursor:pointer; }
