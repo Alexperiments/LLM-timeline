@@ -147,6 +147,8 @@ html,body,#root { height:100%; overflow:hidden; }
 .cluster-close:hover { color:var(--foreground); }
 .split-stage { position:absolute; inset:0; z-index:15; overflow:hidden; background:var(--background); }
 .split-half { position:absolute; top:0; height:100%; overflow:hidden; pointer-events:none; transition:transform 550ms cubic-bezier(.65,0,.25,1); }
+.split-half > div { filter:blur(0px); transition:filter 550ms cubic-bezier(.65,0,.25,1); }
+.is-expanded .split-half > div { filter:blur(6px); }
 .split-half .ribbons { animation:none; }
 .split-half .idea-node .idea-tooltip,.split-half .cursor-guide { visibility:hidden; }
 .split-half .point-node .idea-dot { opacity:1; }

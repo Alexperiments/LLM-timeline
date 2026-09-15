@@ -3,7 +3,7 @@ import type { Idea } from 'virtual:ideas';
 import { Lesson } from './idea-content';
 
 // Both panes are inert copies of the exact current scene, including dates and markers.
-// Only their translations change; the live timeline retains its range and layout.
+// The panes slide apart and blur; the live timeline retains its range and layout.
 export function SplitLesson({ idea, scene, origin, onClose, onSelect, onBusy }: {
   idea: Idea | undefined; scene: RefObject<HTMLDivElement | null>; origin: number;
   onClose: () => void; onSelect: (idea: Idea) => void; onBusy: (busy: boolean) => void;
