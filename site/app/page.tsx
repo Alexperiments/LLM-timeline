@@ -9,7 +9,7 @@ import { clampThumb, sliderFractions } from './slider-geometry';
 const DAY = 86_400_000;
 const MAX_ZOOM_DAYS = 30;
 const MAX_ZOOM_SPAN = MAX_ZOOM_DAYS * DAY;
-const MIN = Math.min(Date.UTC(2018, 0, 1), ...ideas.map(idea => idea.start.value));
+const MIN = Date.UTC(2015, 0, 1);
 const TODAY = new Date().setUTCHours(0, 0, 0, 0);
 const MAX = Math.max(TODAY, ...ideas.map(idea => idea.end?.value ?? idea.start.value));
 const dateLabel = (value: number, detailed = false) => new Intl.DateTimeFormat('en', { year: 'numeric', ...(detailed ? { month: 'short' as const } : {}), timeZone: 'UTC' }).format(value);
