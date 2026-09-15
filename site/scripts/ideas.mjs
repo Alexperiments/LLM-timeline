@@ -24,7 +24,7 @@ export function parseIdea(source, filename) {
     const { data, content } = matter(source);
     for (const field of ['title', 'track', 'category', 'date']) if (!data[field] || !String(data[field]).trim()) throw new Error(`Missing required field: ${field}.`);
     if (!['Model architecture', 'Training methods', 'Agent systems'].includes(data.track)) throw new Error(`Unknown track "${data.track}".`);
-    if (!['Mechanism', 'Practice', 'Capability landmark'].includes(data.category)) throw new Error(`Unknown category "${data.category}".`);
+    if (!['Mechanism', 'Practice', 'Landmark'].includes(data.category)) throw new Error(`Unknown category "${data.category}".`);
     const normalize = value => value instanceof Date ? value.toISOString().slice(0, 10) : value;
     const date = parseDate(normalize(data.date));
     return { id: filename.replace(/\.md$/i, '').replaceAll('\\', '/'), title: String(data.title), track: data.track, category: data.category, date, body: content.trim() };
