@@ -200,7 +200,7 @@ export default function Home() {
       </header>
 
       <section className="timeline-shell" aria-label="Timeline explorer">
-        <div ref={scene} className="timeline-scene" style={{ visibility: selected || splitBusy ? 'hidden' : 'visible' }} inert={!!selected || splitBusy}>
+        <div ref={scene} className="timeline-scene" inert={!!selected || splitBusy}>
         <div ref={surface} className="timeline" style={{ height: laneHeight * 3, minHeight: laneHeight * 3 }} tabIndex={0} role="region" aria-label="Timeline. Double-click to zoom in. Drag or use left and right arrow keys to navigate."
           onDoubleClick={event => {
             if ((event.target as Element).closest('button')) return;

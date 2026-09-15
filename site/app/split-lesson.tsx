@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject, type CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useState, type RefObject, type CSSProperties } from 'react';
 import type { Idea } from 'virtual:ideas';
 import { Lesson } from './idea-content';
 
@@ -16,7 +16,9 @@ export function SplitLesson({ idea, scene, origin, onClose, onSelect, onBusy }: 
   const right = useRef<HTMLDivElement>(null);
   const splitRatio = useRef<number | null>(null);
 
-  useEffect(() => {
+  // Prepare the overlay before paint so opening and closing never expose an empty frame.
+  // The live scene stays painted underneath the opaque stage throughout the handoff.
+  useLayoutEffect(() => {
     if (idea) { setRetained(idea); onBusy(true); let active = true; requestAnimationFrame(() => requestAnimationFrame(() => { if (active) setExpanded(true); })); return () => { active = false; }; }
     setExpanded(false);
     const timer = window.setTimeout(() => { setRetained(undefined); splitRatio.current = null; onBusy(false); }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 560);
@@ -42,15 +44,23 @@ export function SplitLesson({ idea, scene, origin, onClose, onSelect, onBusy }: 
         : origin;
       splitRatio.current = Math.max(0, Math.min(1, measuredOrigin / Math.max(1, source.clientWidth)));
     }
+    let previousWidth = -1;
+    let previousHeight = -1;
     const update = () => {
       const width = source.clientWidth;
-      setGeometry({ width, height: source.clientHeight, split: width * splitRatio.current!, edge: Math.min(80, width * .075) });
+      const height = source.clientHeight;
+      // ResizeObserver also fires on observation. Avoid replacing freshly painted SVGs
+      // at the start of the transition unless the scene has actually resized.
+      if (width === previousWidth && height === previousHeight) return;
+      previousWidth = width;
+      previousHeight = height;
+      setGeometry({ width, height, split: width * splitRatio.current!, edge: Math.min(80, width * .075) });
       for (const [target, prefix] of [[left.current, 'split-left-'], [right.current, 'split-right-']] as const) {
         if (!target) continue;
         const clone = source.cloneNode(true) as HTMLElement;
         clone.removeAttribute('style');
         clone.style.width = `${width}px`;
-        clone.style.height = `${source.clientHeight}px`;
+        clone.style.height = `${height}px`;
         clone.style.visibility = 'visible';
         clone.inert = true;
         clone.setAttribute('aria-hidden', 'true');
