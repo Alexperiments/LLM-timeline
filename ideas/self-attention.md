@@ -179,30 +179,6 @@ Residual connections were introduced as a general deep-network architecture by H
 
 Residual path preserves a direct route for existing representation while attention contributes a context-dependent update and supports optimization of stacked layers. Residual connection and layer normalization are therefore not parts of mathematical attention operation itself, but parts of Transformer self-attention **sublayer**.
 
-## Visualizations
-
-Most useful original visualization is **Figure 2** of *Attention Is All You Need* [1]. Left diagram decomposes scaled dot-product attention into:
-
-$$
-Q,K
-\rightarrow
-QK^\top
-\rightarrow
-\text{Scale}
-\rightarrow
-\text{Mask (optional)}
-\rightarrow
-\text{Softmax}
-\rightarrow
-\times V.
-$$
-
-Right diagram shows multi-head attention: independent learned linear projections feed parallel attention heads; outputs are concatenated and projected.
-
-**Figure 1** [1] places self-attention in full Transformer architecture and shows positional encoding, masked decoder self-attention, and residual `Add & Norm` paths.
-
-For historical comparison, Figure 1 of Gehring et al. [5] illustrates a convolutional sequence-to-sequence architecture, useful for contrasting stacked local convolutional processing with direct all-to-all interactions in self-attention.
-
 ## Individual ideas in this landmark
 - Scaled dot-product self-attention
 - Multi-head attention
