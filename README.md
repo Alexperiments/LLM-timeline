@@ -1,5 +1,28 @@
 # LLM Timeline
 
+## Development
+
+Requires Node.js 22.13.0 or newer. From the repository root, install dependencies:
+
+```sh
+cd site
+npm ci
+```
+
+Run the development server at http://localhost:3000:
+
+```sh
+npm run dev -- --port 3000 --strictPort
+```
+
+Build the project (from the `site` directory):
+
+```sh
+npm run build
+```
+
+The production build is written to `site/dist`.
+
 ## Writing math in lessons
 
 Lesson Markdown supports LaTeX math rendered with KaTeX. Use `$p_i$` for inline
@@ -17,11 +40,6 @@ Use dollar delimiters rather than `\( … \)` or `\[ … \]`. Escape literal dol
 signs as `\$` in prose. Math inside inline code or fenced code blocks stays literal.
 
 ## TODO
-- [x] Handle crowded ideas areas: overlapping punctual ideas collapse into an aggregated node showing their count; clicking zooms the timeline to expand them, or shows a dropdown when they cannot be separated (e.g. same day).
-- [ ] Design the practice idea visualization.
-- [ ] Improve idea name label on hover. Maybe it's better to transform the point into the label, keeping the style and animation.
-- [ ] Fix slider's thumbs overlap
-- [ ] Fix lane width
 
 ## Ideas roadmap
 
