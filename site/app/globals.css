@@ -105,8 +105,9 @@ html,body,#root { height:100%; overflow:hidden; }
 .point-node:not(.cluster-node) .idea-dot { opacity:0; animation:none; }
 .cluster-node:is(:hover,:focus-visible) .idea-dot { scale:1.18; }
 .landmark-node .idea-dot { outline:2px solid #fffdf570; outline-offset:3px; }
-/* The individual marker is one persistent surface: its four edges expand
-   from an 18px circle into the label bounds, then return along the same path. */
+/* Animate only hover expansion. Edge alignment must follow the timeline
+   immediately, including while the marker is expanding or settling. */
+@property --idea-expansion { syntax:"<number>"; inherits:false; initial-value:0; }
 .idea-node .idea-tooltip { position:absolute; top:50%; bottom:auto; left:50%; transform:none; translate:-50% -50%; transform-origin:var(--idea-origin,50%) 50%; width:max-content; max-width:min(220px,calc(100vw - 32px)); overflow:visible; opacity:0; visibility:hidden; pointer-events:none; --idea-breathe-scale:1.01; scale:1; transition:opacity .38s ease,visibility 0s linear .72s; }
 .idea-node .idea-label { white-space:normal; padding:8px 15px; background:#fffdf5; color:#263746; border:1px solid #ffffffb0; border-radius:999px; font:14px/1.25 Georgia,serif; box-shadow:0 2px 8px #26374620; }
 .idea-tooltip::after { content:''; position:absolute; inset:0; border:1px solid #fffdf5b0; border-radius:999px; opacity:0; pointer-events:none; transform-origin:inherit; }
@@ -116,8 +117,8 @@ html,body,#root { height:100%; overflow:hidden; }
 .idea-node:is(:hover,:focus-visible) :is(.idea-dot,.idea-tooltip)::after { animation:idea-hover-ripple var(--idea-hover-period) var(--idea-ripple-easing) var(--idea-settle-time) infinite; }
 .point-node:not(.cluster-node) .idea-tooltip { opacity:1; visibility:visible; animation:idea-idle-breathe 3.2s var(--idea-breathe-easing) infinite; }
 .point-node:not(.cluster-node):is(:hover,:focus-visible) .idea-tooltip { animation:idea-breathe var(--idea-hover-period) var(--idea-breathe-easing) var(--idea-settle-time) infinite; }
-.point-node .idea-tooltip::before { content:''; position:absolute; inset:calc(50% - 9px) calc(100% - var(--idea-origin,50%) - 9px) calc(50% - 9px) calc(var(--idea-origin,50%) - 9px); border-radius:999px; background:#fffdf5; box-shadow:0 1px 5px #26374620; transition:inset var(--idea-settle-time) cubic-bezier(.4,0,.2,1); }
-.point-node:is(:hover,:focus-visible) .idea-tooltip::before { inset:0; }
+.point-node .idea-tooltip::before { content:''; position:absolute; inset:calc((50% - 9px) * (1 - var(--idea-expansion))) calc((100% - var(--idea-origin,50%) - 9px) * (1 - var(--idea-expansion))) calc((50% - 9px) * (1 - var(--idea-expansion))) calc((var(--idea-origin,50%) - 9px) * (1 - var(--idea-expansion))); border-radius:999px; background:#fffdf5; box-shadow:0 1px 5px #26374620; transition:--idea-expansion var(--idea-settle-time) cubic-bezier(.4,0,.2,1); }
+.point-node:is(:hover,:focus-visible) .idea-tooltip::before { --idea-expansion:1; }
 .idea-node.point-node .idea-label { position:relative; background:transparent; border-color:transparent; box-shadow:none; opacity:0; transition:opacity .16s ease; }
 .point-node:is(:hover,:focus-visible) .idea-label { opacity:1; transition-delay:.38s; }
 .landmark-node .idea-tooltip::before { outline:2px solid #fffdf570; outline-offset:3px; }
