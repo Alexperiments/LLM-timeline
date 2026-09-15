@@ -6,6 +6,7 @@ import 'katex/dist/katex.min.css';
 import { Dialog } from '@base-ui/react/dialog';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import ideas, { type Idea, type IdeaDate } from 'virtual:ideas';
+import { groupOverlappingPoints, IDEA_COLLISION_DISTANCE } from './timeline-layout';
 
 export function formatIdeaDate(date: IdeaDate) {
   return new Intl.DateTimeFormat('en', { timeZone: 'UTC', year: 'numeric', ...(date.precision !== 'year' ? { month: 'long' as const } : {}), ...(date.precision === 'day' ? { day: 'numeric' as const } : {}) }).format(date.value);
@@ -93,30 +94,29 @@ export type LayoutNode =
 
 // Punctual idea nodes sit on the lane's middle line. Overlapping ones collapse into a
 // single aggregated node showing their count; clicking it zooms in to separate them,
-// or reveals a dropdown when they cannot be separated (e.g. all on the same day).
-const OVERLAP_PX = 56;
+// or reveals a dropdown for smaller groups that are easier to choose from directly.
+const MIN_CLUSTER_ZOOM_SIZE = 10;
 
 export function layoutIdeas(range: number[], width: number, now: number) {
   const scale = (value: number) => (value - range[0]) / (range[1] - range[0]) * width;
   return ['Model architecture', 'Training methods', 'Agent systems'].map(track => {
     const items: LayoutNode[] = [];
     const punct = ideas
-      .filter(idea => idea.track === track && idea.category !== 'Practice' && idea.start.value <= range[1])
+      .filter(idea => idea.track === track && idea.category !== 'Practice' && idea.start.value >= range[0] && idea.start.value <= range[1])
       .map(idea => ({ idea, anchor: scale(idea.start.value) }))
       .sort((a, b) => a.anchor - b.anchor);
-    const clusters: { idea: Idea; anchor: number }[][] = [];
-    for (const point of punct) {
-      const last = clusters[clusters.length - 1];
-      if (last && point.anchor - last[last.length - 1].anchor <= OVERLAP_PX) last.push(point);
-      else clusters.push([point]);
-    }
+    const clusters = groupOverlappingPoints(punct, IDEA_COLLISION_DISTANCE);
     for (const cluster of clusters) {
       if (cluster.length === 1) {
         const point = cluster[0];
         items.push({ kind: 'point', idea: point.idea, left: point.anchor - 22, anchor: point.anchor });
       } else {
-        const anchor = cluster.reduce((sum, point) => sum + point.anchor, 0) / cluster.length;
-        const expandable = new Set(cluster.map(point => point.idea.start.value)).size > 1;
+        // Keep the aggregate on the first point in its collision window. This
+        // preserves the same spacing guarantee used to form the window, so an
+        // aggregate cannot overlap the next standalone point after placement.
+        const anchor = cluster[0].anchor;
+        const hasDistinctDates = new Set(cluster.map(point => point.idea.start.value)).size > 1;
+        const expandable = cluster.length >= MIN_CLUSTER_ZOOM_SIZE && hasDistinctDates;
         items.push({ kind: 'cluster', idea: cluster[0].idea, left: anchor - 22, anchor, items: cluster.map(point => point.idea), expandable });
       }
     }

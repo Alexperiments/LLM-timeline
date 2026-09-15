@@ -270,7 +270,7 @@ export default function Home() {
                 if (node.kind === 'cluster') {
                   const open = openCluster === node.items.map(item => item.id).sort().join('|');
                   return <span className="cluster-wrap" key={node.idea.id} style={{ left: node.left, top: `${top}%`, opacity: fade }}>
-                    <button className="idea-node point-node cluster-node" data-idea-ids={JSON.stringify(node.items.map(item => item.id))} aria-label={`${node.items.length} ideas, expand`} aria-expanded={open} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => handleCluster(node)}><span className="idea-dot" aria-hidden="true"/><span className="cluster-count">{node.items.length}</span></button>
+                    <button className="idea-node point-node cluster-node" data-idea-ids={JSON.stringify(node.items.map(item => item.id))} aria-label={`${node.items.length} ideas, ${node.expandable ? 'zoom in' : 'show list'}`} aria-expanded={open} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => handleCluster(node)}><span className="idea-dot" aria-hidden="true"/><span className="cluster-count">{node.items.length}</span></button>
                     {open && <div className="cluster-dropdown" ref={closeCluster} onPointerDown={event => event.stopPropagation()}>
                       <button className="cluster-close" aria-label="Close" onClick={() => setOpenCluster(null)}>×</button>
                       <ul>{node.items.map(item => <li key={item.id}><button onClick={() => openIdea(item)}><span className="cluster-item-title">{item.title}</span><small>{item.category}</small></button></li>)}</ul>
