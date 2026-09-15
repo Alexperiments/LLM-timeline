@@ -2,12 +2,14 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @theme inline { --color-background: var(--background); --color-foreground: var(--foreground); --color-primary: var(--primary); --color-muted: var(--muted); --color-ring: var(--ring); --font-sans: Arial, Helvetica, sans-serif; }
-:root { --background:#f5f5f0; --foreground:#202e38; --primary:#263f51; --muted:#dce1df; --ring:#526e82; --border:#d7ddd9; }
+:root { --background:#ffffff; --foreground:#202e38; --primary:#263f51; --muted:#dce1df; --ring:#526e82; --border:#d7ddd9; }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--background); color:var(--foreground); font-family:Arial,Helvetica,sans-serif; }
 input { font:inherit; }
 :focus-visible { outline:2px solid #235d8b; outline-offset:5px; }
 .observatory { min-height:100svh; display:flex; flex-direction:column; overflow:hidden; }
+.background-particles { position:fixed; inset:0; z-index:0; pointer-events:none; }
+.observatory > :not(.background-particles) { position:relative; z-index:1; }
 .masthead { margin:0 3.3%; min-height:90px; display:flex; align-items:center; justify-content:space-between; gap:28px; border-bottom:1px solid var(--border); }
 h1 { font:30px Georgia,serif; margin:0; letter-spacing:-1px; }
 .timeline-home { padding:0; border:0; background:none; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; }
