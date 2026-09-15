@@ -108,7 +108,7 @@ html,body,#root { height:100%; overflow:hidden; }
 /* Animate only hover expansion. Edge alignment must follow the timeline
    immediately, including while the marker is expanding or settling. */
 @property --idea-expansion { syntax:"<number>"; inherits:false; initial-value:0; }
-.idea-node .idea-tooltip { position:absolute; top:50%; bottom:auto; left:50%; transform:none; translate:-50% -50%; transform-origin:var(--idea-origin,50%) 50%; width:max-content; max-width:min(220px,calc(100vw - 32px)); overflow:visible; opacity:0; visibility:hidden; pointer-events:none; --idea-breathe-scale:1.01; scale:1; transition:opacity .38s ease,visibility 0s linear .72s; }
+.idea-node .idea-tooltip { position:absolute; top:50%; bottom:auto; left:50%; --idea-translate-x:-50%; --idea-translate-y:-50%; transform:translate(var(--idea-translate-x),var(--idea-translate-y)); transform-origin:var(--idea-origin,50%) 50%; width:max-content; max-width:min(220px,calc(100vw - 32px)); overflow:visible; opacity:0; visibility:hidden; pointer-events:none; --idea-breathe-scale:1.01; scale:1; transition:opacity .38s ease,visibility 0s linear .72s; }
 .idea-node .idea-label { white-space:normal; padding:8px 15px; background:#fffdf5; color:#263746; border:1px solid #ffffffb0; border-radius:999px; font:14px/1.25 Georgia,serif; box-shadow:0 2px 8px #26374620; }
 .idea-tooltip::after { content:''; position:absolute; inset:0; border:1px solid #fffdf5b0; border-radius:999px; opacity:0; pointer-events:none; transform-origin:inherit; }
 .idea-node:is(:hover,:focus-visible) .idea-tooltip { opacity:1; visibility:visible; transition-delay:0s; }
@@ -126,8 +126,10 @@ html,body,#root { height:100%; overflow:hidden; }
 .practice-node { border-radius:0; }
 .practice-node::before { content:''; position:absolute; left:0; right:0; top:20px; height:4px; border-radius:4px; background:#fffdf5; }
 .practice-node .idea-dot { width:10px; height:10px; }
-@keyframes idea-idle-breathe { 0%,100% { transform:scale(1); } 35% { transform:scale(var(--idea-breathe-scale)); } }
-@keyframes idea-breathe { 0%,100% { transform:scale(1); } 35% { transform:scale(var(--idea-breathe-scale)); } }
+/* Keep centering in every animation frame: production CSS optimization can
+   combine individual translate/scale properties into transform. */
+@keyframes idea-idle-breathe { 0%,100% { transform:translate(var(--idea-translate-x,0),var(--idea-translate-y,0)) scale(1); } 35% { transform:translate(var(--idea-translate-x,0),var(--idea-translate-y,0)) scale(var(--idea-breathe-scale)); } }
+@keyframes idea-breathe { 0%,100% { transform:translate(var(--idea-translate-x,0),var(--idea-translate-y,0)) scale(1); } 35% { transform:translate(var(--idea-translate-x,0),var(--idea-translate-y,0)) scale(var(--idea-breathe-scale)); } }
 @keyframes idea-ripple { 0% { inset:0; opacity:var(--idea-ripple-opacity); } 75%,100% { inset:calc(-1 * var(--idea-ripple-distance)); opacity:0; } }
 @keyframes idea-hover-ripple { 0% { inset:0; opacity:var(--idea-ripple-opacity); } 75%,100% { inset:calc(-1 * var(--idea-ripple-distance)); opacity:0; } }
 /* Aggregated nodes: a single point standing in for several crowded ideas.

@@ -261,7 +261,7 @@ export default function Home() {
                 const tooltipStyle = {
                   left: anchor < 110 ? 0 : anchor > contentEnd - 110 ? 'auto' : undefined,
                   right: anchor > contentEnd - 110 ? 0 : undefined,
-                  translate: anchor < 110 || anchor > contentEnd - 110 ? '0 -50%' : undefined,
+                  '--idea-translate-x': anchor < 110 || anchor > contentEnd - 110 ? '0%' : undefined,
                   '--idea-origin': anchor < 110 ? `${markerCenter}px` : anchor > contentEnd - 110 ? `calc(100% - ${markerCenter}px)` : '50%',
                 } as CSSProperties;
                 if (node.kind === 'point') {
