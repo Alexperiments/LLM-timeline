@@ -165,3 +165,7 @@ html,body,#root { height:100%; overflow:hidden; }
 .idea-node:focus-visible { opacity:1!important; }
 
 .split-half .timeline-scene { overflow:hidden; }
+
+/* Keep long equations within the lesson on narrow screens. */
+.lesson-prose .katex { font-size:1.05em; overflow-wrap:normal; }
+.lesson-prose .katex-display { max-width:100%; overflow-x:auto; overflow-y:hidden; padding:.25em 0; margin:1.3em 0; }

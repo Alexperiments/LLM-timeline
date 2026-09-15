@@ -1,5 +1,8 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { Dialog } from '@base-ui/react/dialog';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import ideas, { type Idea, type IdeaDate } from 'virtual:ideas';
@@ -144,7 +147,7 @@ export function Lesson({ idea, onClose, onSelect, container }: { container: RefO
           <div className="lesson-scroll" ref={body}>
             <p className="lesson-meta">{idea.category} · {idea.category === 'Practice' ? 'Starting date' : 'Date'}: {formatIdeaDate(idea.start)}{idea.category === 'Practice' && ` — ${idea.end ? formatIdeaDate(idea.end) : 'ongoing'}`}</p>
             <Dialog.Title className="lesson-title">{idea.title}</Dialog.Title>
-            <article className="lesson-prose"><ReactMarkdown>{idea.body || 'This lesson has not been written yet.'}</ReactMarkdown></article>
+            <article className="lesson-prose"><ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{idea.body || 'This lesson has not been written yet.'}</ReactMarkdown></article>
           </div>
           </div>
           <button className="lesson-prev" disabled={index <= 0} onClick={() => onSelect(siblings[index-1])} aria-label="Previous idea on this track"><ArrowLeft/></button>

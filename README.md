@@ -1,5 +1,21 @@
 # LLM Timeline
 
+## Writing math in lessons
+
+Lesson Markdown supports LaTeX math rendered with KaTeX. Use `$p_i$` for inline
+math and `$$` on separate lines for display equations:
+
+```md
+The position embedding is $p_i$.
+
+$$
+z_i = x_i + p_i
+$$
+```
+
+Use dollar delimiters rather than `\( … \)` or `\[ … \]`. Escape literal dollar
+signs as `\$` in prose. Math inside inline code or fenced code blocks stays literal.
+
 ## TODO
 - [x] Handle crowded ideas areas: overlapping punctual ideas collapse into an aggregated node showing their count; clicking zooms the timeline to expand them, or shows a dropdown when they cannot be separated (e.g. same day).
 - [ ] Design the practice idea visualization.
