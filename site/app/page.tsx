@@ -5,6 +5,7 @@ import ideas, { type Idea } from 'virtual:ideas';
 import { layoutIdeas, formatIdeaDate, laneY, ribbonPaths, centerlinePaths, type LayoutNode } from './idea-content';
 import { LanePulses } from './lane-pulses';
 import { SplitLesson } from './split-lesson';
+import { BackgroundParticles } from './background-particles';
 import { clampThumb, sliderFractions } from './slider-geometry';
 
 const DAY = 86_400_000;
@@ -217,6 +218,7 @@ export default function Home() {
   const results = query.trim() ? ideas.filter(idea => `${idea.title} ${idea.body} ${idea.track}`.toLowerCase().includes(query.toLowerCase().trim())) : [];
   return (
     <main className={`observatory ${selected ? 'lesson-open' : ''}`}>
+      {!selected && <BackgroundParticles />}
       <header className="masthead">
         <h1><button type="button" className="timeline-home" onClick={resetTimeline} title="Show the full timeline">LLM Timeline<span className="title-dot">.</span></button></h1>
         <div className="search-wrap"><Search size={17} aria-hidden="true"/><input aria-label="Search ideas" placeholder="Search ideas" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if(event.key === 'Escape') setQuery(''); }}/>
