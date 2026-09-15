@@ -94,32 +94,45 @@ html,body,#root { height:100%; overflow:hidden; }
 .timeline-scene { height:100%; min-height:0; display:flex; flex-direction:column; padding-top:36px; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; }
 .timeline-scene .timeline { flex:0 0 auto; min-height:450px; }
 .ideas-viewport { overflow:visible; clip-path:inset(-60px 0 -20px 0); }
-.idea-node { height:44px; padding:0; background:transparent; border:0; box-shadow:none; border-radius:50%; display:grid; place-items:center; }
+.idea-node { --idea-hover-period:1.2s; --idea-settle-time:.6s; --idea-breathe-easing:ease-in-out; --idea-ripple-easing:ease-out; --idea-ripple-distance:8px; --idea-ripple-opacity:.55; --idea-breathe-scale:1.1; height:44px; padding:0; background:transparent; border:0; box-shadow:none; border-radius:50%; display:grid; place-items:center; }
 /* Match the 22px anchor offset in layoutIdeas so dots stay on the centerline. */
 .point-node { width:44px; }
 .idea-node:hover,.idea-node:focus-visible { background:transparent; box-shadow:none; z-index:5; }
 .idea-dot { display:block; width:18px; height:18px; border-radius:50%; background:#fffdf5; box-shadow:0 1px 5px #26374620; position:relative; }
 .idea-node .idea-dot { overflow:visible; }
-.point-node .idea-dot { scale:1; transition:scale .72s cubic-bezier(.16,1,.3,1),opacity .44s ease .12s; animation:idea-breathe 3.2s ease-in-out infinite; }
-.point-node .idea-dot::after { content:''; position:absolute; inset:-1px; border:1px solid #fffdf5b0; border-radius:50%; opacity:0; pointer-events:none; animation:idea-pulse 3.2s ease-out infinite; }
-.point-node:not(.cluster-node):is(:hover,:focus-visible) .idea-dot { opacity:0; scale:.82; animation-duration:4.2s; transition-delay:.08s; }
-.point-node:not(.cluster-node):is(:hover,:focus-visible) .idea-dot::after { animation-duration:4.2s; }
+.point-node .idea-dot { scale:1; transition:scale var(--idea-settle-time) cubic-bezier(.4,0,.2,1); animation:idea-idle-breathe 3.2s var(--idea-breathe-easing) infinite; }
+.point-node .idea-dot::after { content:''; position:absolute; inset:0; border:1px solid #fffdf5b0; border-radius:50%; opacity:0; pointer-events:none; animation:idea-ripple 3.2s var(--idea-ripple-easing) infinite; }
+.point-node:not(.cluster-node) .idea-dot { opacity:0; animation:none; }
+.cluster-node:is(:hover,:focus-visible) .idea-dot { scale:1.18; }
 .landmark-node .idea-dot { outline:2px solid #fffdf570; outline-offset:3px; }
-.idea-tooltip { position:absolute; top:50%; bottom:auto; left:50%; transform:translateX(-50%); translate:0 -50%; width:max-content; max-width:min(220px,calc(100vw - 32px)); white-space:normal!important; padding:8px 15px; background:#fffdf5; color:#263746; border:1px solid #ffffffb0; border-radius:999px; font:14px/1.25 Georgia,serif; box-shadow:0 2px 8px #26374620; opacity:0; visibility:hidden; pointer-events:none; scale:1; will-change:clip-path,scale,opacity; transition:opacity .38s ease,scale .56s cubic-bezier(.16,1,.3,1),visibility 0s linear .56s; }
-.idea-tooltip::after { content:''; position:absolute; inset:-1px; border:1px solid #fffdf5b0; border-radius:inherit; opacity:0; pointer-events:none; }
-.idea-node:hover .idea-tooltip,.idea-node:focus-visible .idea-tooltip { opacity:1; visibility:visible; scale:1; animation:idea-label-breathe 4.2s ease-in-out .56s infinite; }
-.idea-node:hover .idea-tooltip::after,.idea-node:focus-visible .idea-tooltip::after { animation:idea-pulse 4.2s ease-out .2s infinite; }
-.point-node .idea-tooltip { color:transparent; clip-path:inset(calc(50% - 9px) calc(50% - 9px) round 9px); border-radius:9px; transition:opacity .38s ease,scale .56s cubic-bezier(.16,1,.3,1),color .28s ease .32s,clip-path .72s cubic-bezier(.16,1,.3,1),border-radius .72s cubic-bezier(.16,1,.3,1),visibility 0s linear .72s; }
-.point-node:hover .idea-tooltip,.point-node:focus-visible .idea-tooltip { color:#263746; clip-path:inset(0 round 999px); border-radius:999px; transition:opacity .38s ease,scale .56s cubic-bezier(.16,1,.3,1),color .28s ease .32s,clip-path .72s cubic-bezier(.16,1,.3,1),border-radius .72s cubic-bezier(.16,1,.3,1),visibility 0s; }
+/* The individual marker is one persistent surface: its four edges expand
+   from an 18px circle into the label bounds, then return along the same path. */
+.idea-node .idea-tooltip { position:absolute; top:50%; bottom:auto; left:50%; transform:none; translate:-50% -50%; transform-origin:var(--idea-origin,50%) 50%; width:max-content; max-width:min(220px,calc(100vw - 32px)); overflow:visible; opacity:0; visibility:hidden; pointer-events:none; --idea-breathe-scale:1.01; scale:1; transition:opacity .38s ease,visibility 0s linear .72s; }
+.idea-node .idea-label { white-space:normal; padding:8px 15px; background:#fffdf5; color:#263746; border:1px solid #ffffffb0; border-radius:999px; font:14px/1.25 Georgia,serif; box-shadow:0 2px 8px #26374620; }
+.idea-tooltip::after { content:''; position:absolute; inset:0; border:1px solid #fffdf5b0; border-radius:999px; opacity:0; pointer-events:none; transform-origin:inherit; }
+.idea-node:is(:hover,:focus-visible) .idea-tooltip { opacity:1; visibility:visible; transition-delay:0s; }
+/* Both hover surfaces restart together after the size/morph transition. */
+.idea-node:is(:hover,:focus-visible) :is(.idea-dot,.idea-tooltip) { animation:idea-breathe var(--idea-hover-period) var(--idea-breathe-easing) var(--idea-settle-time) infinite; }
+.idea-node:is(:hover,:focus-visible) :is(.idea-dot,.idea-tooltip)::after { animation:idea-hover-ripple var(--idea-hover-period) var(--idea-ripple-easing) var(--idea-settle-time) infinite; }
+.point-node:not(.cluster-node) .idea-tooltip { opacity:1; visibility:visible; animation:idea-idle-breathe 3.2s var(--idea-breathe-easing) infinite; }
+.point-node:not(.cluster-node):is(:hover,:focus-visible) .idea-tooltip { animation:idea-breathe var(--idea-hover-period) var(--idea-breathe-easing) var(--idea-settle-time) infinite; }
+.point-node .idea-tooltip::before { content:''; position:absolute; inset:calc(50% - 9px) calc(100% - var(--idea-origin,50%) - 9px) calc(50% - 9px) calc(var(--idea-origin,50%) - 9px); border-radius:999px; background:#fffdf5; box-shadow:0 1px 5px #26374620; transition:inset var(--idea-settle-time) cubic-bezier(.4,0,.2,1); }
+.point-node:is(:hover,:focus-visible) .idea-tooltip::before { inset:0; }
+.idea-node.point-node .idea-label { position:relative; background:transparent; border-color:transparent; box-shadow:none; opacity:0; transition:opacity .16s ease; }
+.point-node:is(:hover,:focus-visible) .idea-label { opacity:1; transition-delay:.38s; }
+.landmark-node .idea-tooltip::before { outline:2px solid #fffdf570; outline-offset:3px; }
+.landmark-node:is(:hover,:focus-visible) .idea-tooltip::before { outline-color:transparent; }
 .practice-node { border-radius:0; }
 .practice-node::before { content:''; position:absolute; left:0; right:0; top:20px; height:4px; border-radius:4px; background:#fffdf5; }
 .practice-node .idea-dot { width:10px; height:10px; }
-@keyframes idea-breathe { 0%,100% { transform:scale(1); } 35% { transform:scale(1.1); } }
-@keyframes idea-label-breathe { 0%,100% { scale:1; } 35% { scale:1.06; } }
-@keyframes idea-pulse { 0% { transform:scale(1); opacity:.55; } 75%,100% { transform:scale(2.2); opacity:0; } }
+@keyframes idea-idle-breathe { 0%,100% { transform:scale(1); } 35% { transform:scale(var(--idea-breathe-scale)); } }
+@keyframes idea-breathe { 0%,100% { transform:scale(1); } 35% { transform:scale(var(--idea-breathe-scale)); } }
+@keyframes idea-ripple { 0% { inset:0; opacity:var(--idea-ripple-opacity); } 75%,100% { inset:calc(-1 * var(--idea-ripple-distance)); opacity:0; } }
+@keyframes idea-hover-ripple { 0% { inset:0; opacity:var(--idea-ripple-opacity); } 75%,100% { inset:calc(-1 * var(--idea-ripple-distance)); opacity:0; } }
 /* Aggregated nodes: a single point standing in for several crowded ideas.
    Reuses the exact point-node dot (white, breathe/pulse) and adds a count badge. */
 .cluster-wrap { position:absolute; transform:translateY(-50%); z-index:4; pointer-events:auto; }
+.cluster-wrap .cluster-node { position:relative; transform:none; }
 .cluster-wrap > * { pointer-events:auto; }
 .cluster-count { position:absolute; top:-5px; right:-9px; min-width:20px; height:20px; padding:0 5px; border-radius:10px; background:#263746; color:#fffdf5; font:700 12px/20px Arial,Helvetica,sans-serif; text-align:center; box-shadow:0 1px 4px #26374640; }
 .cluster-dropdown { position:absolute; top:calc(100% + 10px); left:50%; transform:translateX(-50%); min-width:220px; background:var(--background); border:1px solid var(--border); border-radius:6px; box-shadow:0 8px 24px #26374628; z-index:6; padding:6px; }
@@ -135,7 +148,8 @@ html,body,#root { height:100%; overflow:hidden; }
 .split-stage { position:absolute; inset:0; z-index:15; overflow:hidden; background:var(--background); }
 .split-half { position:absolute; top:0; height:100%; overflow:hidden; pointer-events:none; transition:transform 550ms cubic-bezier(.65,0,.25,1); }
 .split-half .ribbons { animation:none; }
-.split-half .idea-tooltip,.split-half .cursor-guide { visibility:hidden; }
+.split-half .idea-node .idea-tooltip,.split-half .cursor-guide { visibility:hidden; }
+.split-half .point-node .idea-dot { opacity:1; }
 .split-half .idea-dot,.split-half .idea-dot::after { animation:none; }
 .lesson-page { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; background:var(--background); box-shadow:none; animation:none; clip-path:inset(0 var(--split-right) 0 var(--split-x)); transition:clip-path 550ms cubic-bezier(.65,0,.25,1); padding:0 var(--edge); pointer-events:none; }
 .is-expanded .lesson-page { clip-path:inset(0 var(--edge)); pointer-events:auto; }

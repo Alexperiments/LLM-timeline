@@ -257,8 +257,15 @@ export default function Home() {
                 const anchor = node.anchor;
                 const fade = Math.max(0, Math.min(1, anchor / Math.max(60, width * .12), (contentEnd-anchor) / 24));
                 const top = laneY(laneIndex, anchor, width);
+                const markerCenter = node.kind === 'practice' ? node.width / 2 : 22;
+                const tooltipStyle = {
+                  left: anchor < 110 ? 0 : anchor > contentEnd - 110 ? 'auto' : undefined,
+                  right: anchor > contentEnd - 110 ? 0 : undefined,
+                  translate: anchor < 110 || anchor > contentEnd - 110 ? '0 -50%' : undefined,
+                  '--idea-origin': anchor < 110 ? `${markerCenter}px` : anchor > contentEnd - 110 ? `calc(100% - ${markerCenter}px)` : '50%',
+                } as CSSProperties;
                 if (node.kind === 'point') {
-                  return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.start)}`} className={`idea-node point-node ${node.idea.category === 'Capability landmark' ? 'landmark-node' : ''}`} style={{ left: node.left, opacity: fade, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={{ left: anchor < 110 ? 0 : anchor > contentEnd-110 ? 'auto' : undefined, right: anchor > contentEnd-110 ? 0 : undefined, transform: anchor < 110 || anchor > contentEnd-110 ? 'none' : undefined }}>{node.idea.title}</span></button>;
+                  return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.start)}`} className={`idea-node point-node ${node.idea.category === 'Capability landmark' ? 'landmark-node' : ''}`} style={{ left: node.left, opacity: fade, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={tooltipStyle}><span className="idea-label">{node.idea.title}</span></span></button>;
                 }
                 if (node.kind === 'cluster') {
                   const open = openCluster === node.items.map(item => item.id).sort().join('|');
@@ -270,7 +277,7 @@ export default function Home() {
                     </div>}
                   </span>;
                 }
-                return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.start)}`} className={`idea-node practice-node`} style={{ left: node.left, width: node.width, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={{ left: anchor < 110 ? 0 : anchor > contentEnd-110 ? 'auto' : undefined, right: anchor > contentEnd-110 ? 0 : undefined, transform: anchor < 110 || anchor > contentEnd-110 ? 'none' : undefined }}>{node.idea.title}</span></button>;
+                return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.start)}`} className={`idea-node practice-node`} style={{ left: node.left, width: node.width, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={tooltipStyle}><span className="idea-label">{node.idea.title}</span></span></button>;
               })}
             </div>)}
           </div>
