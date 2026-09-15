@@ -101,11 +101,9 @@ html,body,#root { height:100%; overflow:hidden; }
 .idea-node:hover,.idea-node:focus-visible { background:transparent; box-shadow:none; z-index:5; }
 .idea-dot { display:block; width:18px; height:18px; border-radius:50%; background:#fffdf5; box-shadow:0 1px 5px #26374620; position:relative; }
 .idea-node .idea-dot { overflow:visible; }
-.point-node .idea-dot { scale:1; transition:scale var(--idea-settle-time) cubic-bezier(.4,0,.2,1); animation:idea-idle-breathe 3.2s var(--idea-breathe-easing) infinite; }
+.point-node .idea-dot { scale:1; transition:scale var(--idea-settle-time) cubic-bezier(.4,0,.2,1); animation:idea-breathe 3.2s var(--idea-breathe-easing) infinite; }
 .point-node .idea-dot::after { content:''; position:absolute; inset:0; border:1px solid #fffdf5b0; border-radius:50%; opacity:0; pointer-events:none; animation:idea-ripple 3.2s var(--idea-ripple-easing) infinite; }
-.point-node:not(.cluster-node) .idea-dot { opacity:0; animation:none; }
 .cluster-node:is(:hover,:focus-visible) .idea-dot { scale:1.18; }
-.landmark-node .idea-dot { outline:2px solid #fffdf570; outline-offset:3px; }
 /* Animate only hover expansion. Edge alignment must follow the timeline
    immediately, including while the marker is expanding or settling. */
 @property --idea-expansion { syntax:"<number>"; inherits:false; initial-value:0; }
@@ -113,23 +111,17 @@ html,body,#root { height:100%; overflow:hidden; }
 .idea-node .idea-label { white-space:normal; padding:8px 15px; background:#fffdf5; color:#263746; border:1px solid #ffffffb0; border-radius:999px; font:14px/1.25 Georgia,serif; box-shadow:0 2px 8px #26374620; }
 .idea-tooltip::after { content:''; position:absolute; inset:0; border:1px solid #fffdf5b0; border-radius:999px; opacity:0; pointer-events:none; transform-origin:inherit; }
 .idea-node:is(:hover,:focus-visible) .idea-tooltip { opacity:1; visibility:visible; transition-delay:0s; }
-/* Both hover surfaces restart together after the size/morph transition. */
+/* Dots and expanded titles share the same breathing and ripple animations. */
 .idea-node:is(:hover,:focus-visible) :is(.idea-dot,.idea-tooltip) { animation:idea-breathe var(--idea-hover-period) var(--idea-breathe-easing) var(--idea-settle-time) infinite; }
-.idea-node:is(:hover,:focus-visible) :is(.idea-dot,.idea-tooltip)::after { animation:idea-hover-ripple var(--idea-hover-period) var(--idea-ripple-easing) var(--idea-settle-time) infinite; }
-.point-node:not(.cluster-node) .idea-tooltip { opacity:1; visibility:visible; animation:idea-idle-breathe 3.2s var(--idea-breathe-easing) infinite; }
-.point-node:not(.cluster-node):is(:hover,:focus-visible) .idea-tooltip { animation:idea-breathe var(--idea-hover-period) var(--idea-breathe-easing) var(--idea-settle-time) infinite; }
+.idea-node:is(:hover,:focus-visible) :is(.idea-dot,.idea-tooltip)::after { animation:idea-ripple var(--idea-hover-period) var(--idea-ripple-easing) var(--idea-settle-time) infinite; }
 .point-node .idea-tooltip::before { content:''; position:absolute; inset:calc((50% - 9px) * (1 - var(--idea-expansion))) calc((100% - var(--idea-origin,50%) - 9px) * (1 - var(--idea-expansion))) calc((50% - 9px) * (1 - var(--idea-expansion))) calc((var(--idea-origin,50%) - 9px) * (1 - var(--idea-expansion))); border-radius:999px; background:#fffdf5; box-shadow:0 1px 5px #26374620; transition:--idea-expansion var(--idea-settle-time) cubic-bezier(.4,0,.2,1); }
 .point-node:is(:hover,:focus-visible) .idea-tooltip::before { --idea-expansion:1; }
 .idea-node.point-node .idea-label { position:relative; background:transparent; border-color:transparent; box-shadow:none; opacity:0; transition:opacity .16s ease; }
 .point-node:is(:hover,:focus-visible) .idea-label { opacity:1; transition-delay:.38s; }
-.landmark-node .idea-tooltip::before { outline:2px solid #fffdf570; outline-offset:3px; }
-.landmark-node:is(:hover,:focus-visible) .idea-tooltip::before { outline-color:transparent; }
 /* Keep centering in every animation frame: production CSS optimization can
    combine individual translate/scale properties into transform. */
-@keyframes idea-idle-breathe { 0%,100% { transform:translate(var(--idea-translate-x,0),var(--idea-translate-y,0)) scale(1); } 35% { transform:translate(var(--idea-translate-x,0),var(--idea-translate-y,0)) scale(var(--idea-breathe-scale)); } }
 @keyframes idea-breathe { 0%,100% { transform:translate(var(--idea-translate-x,0),var(--idea-translate-y,0)) scale(1); } 35% { transform:translate(var(--idea-translate-x,0),var(--idea-translate-y,0)) scale(var(--idea-breathe-scale)); } }
 @keyframes idea-ripple { 0% { inset:0; opacity:var(--idea-ripple-opacity); } 75%,100% { inset:calc(-1 * var(--idea-ripple-distance)); opacity:0; } }
-@keyframes idea-hover-ripple { 0% { inset:0; opacity:var(--idea-ripple-opacity); } 75%,100% { inset:calc(-1 * var(--idea-ripple-distance)); opacity:0; } }
 /* Aggregated nodes: a single point standing in for several crowded ideas.
    Reuses the exact point-node dot (white, breathe/pulse) and adds a count badge. */
 .cluster-wrap { position:absolute; transform:translateY(-50%); z-index:4; pointer-events:auto; }
