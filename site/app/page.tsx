@@ -4,11 +4,9 @@ import ideas, { type Idea } from 'virtual:ideas';
 import { layoutIdeas, formatIdeaDate, laneY, ribbonPaths, centerlinePaths, type LayoutNode } from './idea-content';
 import { LanePulses } from './lane-pulses';
 import { SplitLesson } from './split-lesson';
-import { Slider } from '@/components/ui/slider';
+import { clampThumb, sliderFractions } from './slider-geometry';
 
 const DAY = 86_400_000;
-const NAVIGATOR_EDGE_INSET = 24;
-const THUMB_DIAMETER = 20;
 const MAX_ZOOM_DAYS = 30;
 const MAX_ZOOM_SPAN = MAX_ZOOM_DAYS * DAY;
 const MIN = Math.min(Date.UTC(2018, 0, 1), ...ideas.map(idea => idea.start.value));
@@ -88,31 +86,24 @@ export default function Home() {
   const drag = useRef<{ x: number; range: number[] } | null>(null);
   const span = range[1] - range[0];
   const sliderWidth = Math.max(1, navigatorWidth);
-  const rangeStartFraction = (range[0] - MIN) / (max - MIN);
-  const rangeEndFraction = (range[1] - MIN) / (max - MIN);
-  const rangeFraction = span / (max - MIN);
-  const rangeStartPosition = rangeStartFraction * sliderWidth;
-  const rangeEndPosition = rangeEndFraction * sliderWidth;
-  const minimumThumbDistance = Math.min(sliderWidth, THUMB_DIAMETER * 2);
-  const needsVisualSpacing = rangeEndPosition - rangeStartPosition < minimumThumbDistance;
-  const visualRangeStart = needsVisualSpacing
-    ? Math.max(0, Math.min(sliderWidth - minimumThumbDistance, (rangeStartPosition + rangeEndPosition - minimumThumbDistance) / 2))
-    : rangeStartPosition;
-  const visualRangeEnd = needsVisualSpacing ? visualRangeStart + minimumThumbDistance : rangeEndPosition;
-  const expandedThumbSize = THUMB_DIAMETER * 2.2;
-  const visualThumbDistance = visualRangeEnd - visualRangeStart;
-  const startThumbAtEdge = visualRangeStart <= 0;
-  const endThumbAtEdge = visualRangeEnd >= sliderWidth;
-  const canExpandBothThumbsInwards = visualThumbDistance >= expandedThumbSize * 2;
-  const canExpandOneThumbInwards = visualThumbDistance >= expandedThumbSize + THUMB_DIAMETER;
+  const expandedThumbSize = 44;
+  // Remove the minimum date span before mapping onto the space between thumbs.
+  const [startFraction, endFraction] = sliderFractions(range, MIN, max, MAX_ZOOM_SPAN);
   const sliderVisualStyle = {
-    '--slider-thumb-start': `${visualRangeStart / sliderWidth * 100}%`,
-    '--slider-thumb-end': `${visualRangeEnd / sliderWidth * 100}%`,
-    '--slider-range-start': `${visualRangeStart / sliderWidth * 100}%`,
-    '--slider-range-width': `${(visualRangeEnd - visualRangeStart) / sliderWidth * 100}%`,
-    '--slider-thumb-start-origin': startThumbAtEdge && (endThumbAtEdge ? canExpandBothThumbsInwards : canExpandOneThumbInwards) ? 'left center' : 'right center',
-    '--slider-thumb-end-origin': endThumbAtEdge && (startThumbAtEdge ? canExpandBothThumbsInwards : canExpandOneThumbInwards) ? 'right center' : 'left center',
+    '--thumb-expanded-size': `${expandedThumbSize}px`,
+    '--slider-start': startFraction,
+    '--slider-end': endFraction,
   } as CSSProperties;
+  const thumbDrag = useRef<{ index: number; x: number; value: number; travel: number } | null>(null);
+  const [navigatorDragging, setNavigatorDragging] = useState(false);
+  function stopZoomAnimation() {
+    if (zoomAnim.current !== null) cancelAnimationFrame(zoomAnim.current);
+    zoomAnim.current = null;
+  }
+  function moveThumb(index: number, value: number) {
+    stopZoomAnimation();
+    setRange(current => clampThumb(current, index, value, MIN, max, MAX_ZOOM_SPAN));
+  }
   useEffect(() => {
     const measure = () => {
       if (!scroller.current) return;
@@ -205,7 +196,7 @@ export default function Home() {
         <div ref={scene} className="timeline-scene" style={{ visibility: selected || splitBusy ? 'hidden' : 'visible' }} inert={!!selected || splitBusy}>
         <div className="date-heading" style={{ marginRight: Math.max(0, width - contentEnd) }}><div><p>{dateLabel(range[0], detailed)}</p></div><div className="date-end"><p>{dateLabel(range[1], detailed)}</p></div></div>
         <div ref={surface} className="timeline" style={{ height: laneHeight * 3, minHeight: laneHeight * 3 }} tabIndex={0} role="region" aria-label="Timeline. Drag or use left and right arrow keys to navigate."
-          onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); pan(event.key === 'ArrowLeft' ? -span / 10 : span / 10); } }}
+          onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); stopZoomAnimation(); pan(event.key === 'ArrowLeft' ? -span / 10 : span / 10); } }}
           onWheel={event => { if (event.clientX - event.currentTarget.getBoundingClientRect().left <= contentEnd) pan((event.deltaX || event.deltaY) * span / Math.max(1, contentEnd)); }}
           onPointerDown={event => { if((event.target as HTMLElement).closest('button') || event.button !== 0 || event.clientX - event.currentTarget.getBoundingClientRect().left > contentEnd) return; drag.current = { x: event.clientX, range: [...range] }; event.currentTarget.setPointerCapture(event.pointerId); }}
           onPointerMove={event => { const box = event.currentTarget.getBoundingClientRect(); const x = event.clientX - box.left; setCursor(x >= 0 && x <= contentEnd ? x / Math.max(1, contentEnd) : null); if(drag.current) pan((drag.current.x-event.clientX)/Math.max(1, contentEnd)*(drag.current.range[1]-drag.current.range[0]), drag.current.range); }}
@@ -273,14 +264,59 @@ export default function Home() {
         <SplitLesson idea={selected} scene={scene} origin={splitOrigin} onClose={closeLesson} onSelect={openIdea} onBusy={setSplitBusy}/>
       </section>
 
-      <div className="navigator" ref={scroller} inert={!!selected || splitBusy} style={sliderVisualStyle}>
-        <Slider className="time-slider" aria-label="Visible date range" min={MIN} max={max} step={DAY} thumbCollisionBehavior="none" value={range} onValueChange={value => setRange(Array.isArray(value) ? value : [value, range[1]])}/>
+      <div className={`navigator${navigatorDragging ? ' is-dragging' : ''}`} ref={scroller} inert={!!selected || splitBusy} style={sliderVisualStyle}>
+        <div className="time-slider"
+          onPointerDown={event => {
+            if (event.button !== 0 || thumbDrag.current) return;
+            const thumbs = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('.slider-thumb'));
+            const centers = thumbs.map(thumb => { const box = thumb.getBoundingClientRect(); return box.left + box.width / 2; });
+            const pressed = thumbs.findIndex(thumb => thumb.contains(event.target as Node));
+            const index = pressed >= 0 ? pressed : Math.abs(event.clientX - centers[0]) < Math.abs(event.clientX - centers[1]) ? 0 : 1;
+            const diameter = thumbs[index].getBoundingClientRect().width;
+            const box = event.currentTarget.getBoundingClientRect();
+            const fraction = (event.clientX - box.left - diameter * (index + .5)) / Math.max(1, box.width - diameter * 2);
+            const clickedValue = MIN + index * MAX_ZOOM_SPAN + Math.round(fraction * (max - MIN - MAX_ZOOM_SPAN) / DAY) * DAY;
+            const value = pressed >= 0 ? range[index] : clampThumb(range, index, clickedValue, MIN, max, MAX_ZOOM_SPAN)[index];
+            event.preventDefault();
+            thumbs[index].focus({ preventScroll: true });
+            moveThumb(index, value);
+            // Keep drag sensitivity fixed while hover geometry animates.
+            thumbDrag.current = { index, x: event.clientX, value, travel: Math.max(1, sliderWidth - expandedThumbSize * 2) };
+            setNavigatorDragging(true);
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={event => {
+            const initial = thumbDrag.current;
+            if (!initial) return;
+            const delta = (event.clientX - initial.x) / initial.travel * (max - MIN - MAX_ZOOM_SPAN);
+            moveThumb(initial.index, initial.value + Math.round(delta / DAY) * DAY);
+          }}
+          onLostPointerCapture={() => { thumbDrag.current = null; setNavigatorDragging(false); }}
+          onPointerUp={event => event.currentTarget.releasePointerCapture(event.pointerId)}
+          onPointerCancel={event => event.currentTarget.releasePointerCapture(event.pointerId)}
+        >
+          <div className="slider-range"/>
+          {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- Custom geometry needs independent focusable slider thumbs. */}
+          {range.map((value, index) => <button key={index} type="button" className="slider-thumb" data-index={index} role="slider" aria-label={index === 0 ? 'Visible range start' : 'Visible range end'} aria-orientation="horizontal"
+            aria-valuemin={index === 0 ? MIN : range[0] + MAX_ZOOM_SPAN}
+            aria-valuemax={index === 0 ? range[1] - MAX_ZOOM_SPAN : max}
+            aria-valuenow={value} aria-valuetext={dateLabel(value, true)}
+            onKeyDown={event => {
+              const amounts: Record<string, number> = { ArrowLeft: -DAY, ArrowDown: -DAY, ArrowRight: DAY, ArrowUp: DAY, PageDown: -MAX_ZOOM_SPAN, PageUp: MAX_ZOOM_SPAN };
+              if (event.key in amounts || event.key === 'Home' || event.key === 'End') {
+                event.preventDefault();
+                moveThumb(index, event.key === 'Home' ? MIN : event.key === 'End' ? max : value + amounts[event.key]);
+              }
+            }}
+
+          />)}
+        </div>
         <div className="year-labels" aria-hidden="true">{yearLabels.map(({ value, label }) => { const frac = (value - MIN) / (MAX - MIN); const transform = frac < .06 ? 'none' : frac > .94 ? 'translateX(-100%)' : 'translateX(-50%)'; return <span key={value} style={{ left: `${frac * 100}%`, transform }}>{label}</span>; })}</div>
-        <div className="range-pan" role="slider" tabIndex={0} aria-label="Move visible date range" aria-valuemin={MIN} aria-valuemax={max-span} aria-valuenow={range[0]} aria-valuetext={`${dateLabel(range[0], true)} to ${dateLabel(range[1], true)}`} style={{left: `${NAVIGATOR_EDGE_INSET + rangeStartFraction * sliderWidth}px`, width: `${Math.max(0, rangeFraction * sliderWidth - NAVIGATOR_EDGE_INSET * 2)}px`}}
-          onKeyDown={event => { if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); pan(event.key === 'ArrowLeft' ? -span/10 : span/10); } }}
-          onPointerDown={event => { if(event.button !== 0) return; event.preventDefault(); selectionDrag.current = { x: event.clientX, range: [...range] }; event.currentTarget.setPointerCapture(event.pointerId); }}
-          onPointerMove={event => { if(selectionDrag.current && scroller.current) pan((event.clientX-selectionDrag.current.x)/Math.max(1, scroller.current.clientWidth)*(max-MIN), selectionDrag.current.range); }}
-          onPointerUp={() => { selectionDrag.current = null; }} onPointerCancel={() => { selectionDrag.current = null; }}/>
+        <div className="range-pan" role="slider" tabIndex={0} aria-label="Move visible date range" aria-valuemin={MIN} aria-valuemax={max-span} aria-valuenow={range[0]} aria-valuetext={`${dateLabel(range[0], true)} to ${dateLabel(range[1], true)}`}
+          onKeyDown={event => { if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); stopZoomAnimation(); pan(event.key === 'ArrowLeft' ? -span/10 : span/10); } }}
+          onPointerDown={event => { if(event.button !== 0) return; event.preventDefault(); stopZoomAnimation(); setNavigatorDragging(true); selectionDrag.current = { x: event.clientX, range: [...range] }; event.currentTarget.setPointerCapture(event.pointerId); }}
+          onPointerMove={event => { if(selectionDrag.current && scroller.current) pan((event.clientX-selectionDrag.current.x)/Math.max(1, scroller.current.clientWidth - expandedThumbSize * 2)*(max-MIN-MAX_ZOOM_SPAN), selectionDrag.current.range); }}
+          onLostPointerCapture={() => { selectionDrag.current = null; setNavigatorDragging(false); }}/>
       </div>
     </main>
   );
