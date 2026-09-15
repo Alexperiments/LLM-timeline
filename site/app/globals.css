@@ -22,10 +22,11 @@ h1 { font:30px Georgia,serif; margin:0; letter-spacing:-1px; }
 .year-grid { position:absolute; inset:0; z-index:1; pointer-events:none; }
 .year-tick { position:absolute; top:0; bottom:0; }
 .year-tick span { position:absolute; top:-28px; white-space:nowrap; transform:translateX(-50%); font:12px monospace; color:#51626c; }
-.track-labels { position:absolute; inset:0 3.3% 0 23%; display:grid; grid-template-rows:repeat(3,1fr); pointer-events:none; }
-.track-label { display:flex; align-items:center; justify-content:flex-end; text-align:right; color:#243642; padding-top:3px; }
-.track-label h2 { font:clamp(16px,1.4vw,20px) Georgia,serif; margin:0; line-height:1.25; letter-spacing:-.15px; }
-.agents { color:#2f342e; }
+.track-labels { position:absolute; inset:0 3.3% 0 0; display:grid; grid-template-rows:repeat(3,1fr); pointer-events:none; }
+.track-label { display:flex; align-items:flex-start; justify-content:flex-end; text-align:right; color:#fff; padding-top:12px; }
+.track-label:first-child { padding-top:20px; }
+.track-label h2 { font:800 clamp(11px,1vw,14px)/1 Arial,Helvetica,sans-serif; margin:0; letter-spacing:.2em; text-transform:uppercase; white-space:nowrap; }
+.agents { color:#fff; }
 .cursor-guide { position:absolute; top:0; bottom:0; width:1px; background:#202e3870; pointer-events:none; z-index:2; }
 .cursor-guide span { position:absolute; bottom:-20px; left:0; transform:translateX(-50%); background:#263f51; color:white; padding:3px 8px; border-radius:3px; font:12px monospace; white-space:nowrap; }
 @property --thumb-size { syntax:'<length>'; inherits:true; initial-value:20px; }
@@ -47,12 +48,11 @@ h1 { font:30px Georgia,serif; margin:0; letter-spacing:-1px; }
 .navigator:is(:hover,:has(:focus-visible),.is-dragging) .year-labels { opacity:1; }
 .year-labels span { position:absolute; top:50%; translate:0 -50%; font:12px monospace; color:#263746; white-space:nowrap; }
 @keyframes arrive { from { opacity:0; transform:translateX(-25px); } to { opacity:1; transform:translateX(0); } }
-@media(max-width:900px) { .track-labels {left:20%;} }
 @media(max-width:600px) {
   .masthead { min-height:80px; gap:15px; margin:0 5%; } h1 {font-size:27px;}
   .search-wrap { width:145px; } .search-wrap input { width:115px; }
-  .timeline { min-height:340px; } .track-labels { left:17%; right:5%; }
-  .track-label h2 { font-size:22px; }   .navigator { margin:0; } .eyebrow {font-size:12px;}
+  .timeline { min-height:340px; } .track-labels { right:5%; }
+  .track-label h2 { font-size:10px; letter-spacing:.14em; }   .navigator { margin:0; } .eyebrow {font-size:12px;}
 }
 @media(prefers-reduced-motion:reduce) { * {animation:none!important;transition:none!important;} }
 
@@ -93,7 +93,7 @@ html,body,#root { height:100%; overflow:hidden; }
 .timeline-shell { position:relative; min-height:0; padding-top:0; overflow:hidden; }
 .timeline-scene { height:100%; min-height:0; display:flex; flex-direction:column; padding-top:36px; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; }
 .timeline-scene .timeline { flex:0 0 auto; min-height:450px; }
-.ideas-viewport { overflow:visible; clip-path:inset(-60px 0 -20px 0); }
+.ideas-viewport { overflow:visible; clip-path:inset(-60px -32px -20px 0); }
 .idea-node { --idea-hover-period:1.2s; --idea-settle-time:.6s; --idea-breathe-easing:ease-in-out; --idea-ripple-easing:ease-out; --idea-ripple-distance:8px; --idea-ripple-opacity:.55; --idea-breathe-scale:1.1; height:44px; padding:0; background:transparent; border:0; box-shadow:none; border-radius:50%; display:grid; place-items:center; }
 /* Match the 22px anchor offset in layoutIdeas so dots stay on the centerline. */
 .point-node { width:44px; }

@@ -10,6 +10,10 @@ import { clampThumb, sliderFractions } from './slider-geometry';
 const DAY = 86_400_000;
 const MAX_ZOOM_DAYS = 30;
 const MAX_ZOOM_SPAN = MAX_ZOOM_DAYS * DAY;
+// Markers can paint into the gap without changing the timeline's date geometry.
+const MARKER_LABEL_MARGIN = 20;
+// The centerlines end closer to the labels than the marker endpoint.
+const CENTERLINE_LABEL_MARGIN = 20;
 const MIN = Date.UTC(2015, 0, 1);
 const TODAY = new Date().setUTCHours(0, 0, 0, 0);
 const MAX = Math.max(TODAY, ...ideas.map(idea => idea.end?.value ?? idea.start.value));
@@ -72,15 +76,15 @@ export default function Home() {
     setMax(Math.max(end, MAX));
     setRange([MIN, Math.max(end, MAX)]);
     const measure = () => {
-      if (!surface.current || !labels.current) return;
+      if (!surface.current) return;
       const box = surface.current.getBoundingClientRect();
-      const leftEdges = Array.from(labels.current.querySelectorAll('h2'), label => label.getBoundingClientRect().left);
       setWidth(box.width);
-      setContentEnd(Math.max(0, Math.min(...leftEdges) - box.left - 24));
+      // Labels sit above their lanes, so the date geometry can use the full
+      // timeline surface instead of reserving a right-hand label column.
+      setContentEnd(Math.max(0, box.width - MARKER_LABEL_MARGIN));
     };
     const observer = new ResizeObserver(measure);
     if (surface.current) observer.observe(surface.current);
-    labels.current?.querySelectorAll('h2').forEach(label => observer.observe(label));
     measure();
     return () => observer.disconnect();
   }, []);
@@ -206,6 +210,7 @@ export default function Home() {
   const layout = layoutIdeas(range, contentEnd, max);
   const clusterNodes = layout.flatMap(lane => lane.items).filter((node): node is Extract<LayoutNode, { kind: 'cluster' }> => node.kind === 'cluster');
   const openClusterNode = openCluster ? clusterNodes.find(node => node.items.map(item => item.id).sort().join('|') === openCluster) : undefined;
+  const lineEnd = contentEnd + MARKER_LABEL_MARGIN - CENTERLINE_LABEL_MARGIN;
   const laneHeight = 150;
   const splitDate = selected ? selected.category === 'Practice' ? (selected.start.value + (selected.end?.value ?? max)) / 2 : selected.start.value : 0;
   const splitOrigin = Math.max(0, Math.min(contentEnd, (splitDate - range[0]) / span * contentEnd));
@@ -241,7 +246,7 @@ export default function Home() {
           <div className="year-grid" style={{ width: contentEnd }} aria-hidden="true">{ticks.map(value => <div key={value} className="year-tick" style={{ left: `${(value-range[0])/span*100}%` }}><span style={{ transform: (value-range[0])/span < .06 ? 'none' : (value-range[0])/span > .94 ? 'translateX(-100%)' : undefined }}>{dateLabel(value, detailed)}</span></div>)}</div>
           <svg className="ribbons" viewBox="0 0 1440 510" preserveAspectRatio="none" aria-hidden="true">
             <defs>
-              <clipPath id="lane-content-clip"><rect width={contentEnd / width * 1440} height="510"/></clipPath>
+              <clipPath id="lane-content-clip"><rect width={lineEnd / width * 1440} height="510"/></clipPath>
               <linearGradient id="blue"><stop stopColor="#7966c6"/><stop offset="1" stopColor="#47a6c4"/></linearGradient>
               <linearGradient id="teal"><stop stopColor="#299ba9"/><stop offset="1" stopColor="#8eba5e"/></linearGradient>
               <linearGradient id="gold"><stop stopColor="#d9805e"/><stop offset="1" stopColor="#dcba4f"/></linearGradient>
@@ -268,14 +273,14 @@ export default function Home() {
             </g>
             <g clipPath="url(#lane-content-clip)">
               <g fill="none" stroke="white" strokeOpacity=".55">{centerlinePaths.map(path => <path key={path} d={path}/>)}</g>
-              <LanePulses endX={contentEnd / width * 1440}/>
+              <LanePulses endX={lineEnd / width * 1440}/>
             </g>
           </svg>
           <div className="ideas-viewport" style={{ width: contentEnd }}>
             {layout.map((lane, laneIndex) => <div className="idea-lane" key={tracks[laneIndex].title} style={{ top: 0, height: '100%' }}>
               {lane.items.map(node => {
                 const anchor = node.anchor;
-                const fade = Math.max(0, Math.min(1, anchor / Math.max(60, width * .12), (contentEnd-anchor) / 24));
+                const fade = Math.max(0, Math.min(1, anchor / Math.max(60, width * .12)));
                 const top = laneY(laneIndex, anchor, width);
                 const markerCenter = node.kind === 'practice' ? node.width / 2 : 22;
                 const tooltipStyle = {
@@ -297,14 +302,14 @@ export default function Home() {
               })}
             </div>)}
           </div>
-          <div ref={labels} className="track-labels">{tracks.map(track => <div className={`track-label ${track.color}`} key={track.color}><h2>{track.title.split(' ')[0]}<br/>{track.title.split(' ').slice(1).join(' ')}</h2></div>)}</div>
+          <div ref={labels} className="track-labels">{tracks.map(track => <div className={`track-label ${track.color}`} key={track.color}><h2>{track.title}</h2></div>)}</div>
           {cursor !== null && <div className="cursor-guide" style={{left: cursor * contentEnd}}><span style={{ transform: cursor > .9 ? 'translateX(-100%)' : cursor < .1 ? 'none' : undefined }}>{dateLabel(range[0]+cursor*span, true)}</span></div>}
         </div>
         </div>
         <SplitLesson idea={selected} scene={scene} origin={splitOrigin} onClose={closeLesson} onSelect={openIdea} onBusy={setSplitBusy}/>
       </section>
 
-      {openClusterNode && clusterMenuPosition && createPortal(
+      {!selected && openClusterNode && clusterMenuPosition && createPortal(
         <div className="cluster-dropdown" ref={closeCluster} style={clusterMenuPosition} onPointerDown={event => event.stopPropagation()}>
           <button className="cluster-close" aria-label="Close" onClick={() => { setOpenCluster(null); setClusterMenuPosition(null); }}>×</button>
           <ul>{openClusterNode.items.map(item => <li key={item.id}><button onClick={() => openIdea(item)}><span className="cluster-item-title">{item.title}</span><small>{item.category}</small></button></li>)}</ul>
