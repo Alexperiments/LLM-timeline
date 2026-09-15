@@ -17,7 +17,7 @@ const MARKER_LABEL_MARGIN = 20;
 const CENTERLINE_LABEL_MARGIN = 20;
 const MIN = Date.UTC(2015, 0, 1);
 const TODAY = new Date().setUTCHours(0, 0, 0, 0);
-const MAX = Math.max(TODAY, ...ideas.map(idea => idea.end?.value ?? idea.start.value));
+const MAX = Math.max(TODAY, ...ideas.map(idea => idea.date.value));
 const dateLabel = (value: number, detailed = false) => new Intl.DateTimeFormat('en', { year: 'numeric', ...(detailed ? { month: 'short' as const } : {}), timeZone: 'UTC' }).format(value);
 const tracks = [
   { title: 'Model architecture', color: 'architecture' },
@@ -150,7 +150,7 @@ export default function Home() {
   function handleCluster(node: LayoutNode, trigger: HTMLButtonElement) {
     if (node.kind !== 'cluster') return;
     if (node.expandable) {
-      const values = node.items.map(item => item.start.value);
+      const values = node.items.map(item => item.date.value);
       const d = Math.max(DAY, Math.max(...values) - Math.min(...values));
       const center = (Math.min(...values) + Math.max(...values)) / 2;
       const span = d / 0.3;
@@ -213,7 +213,7 @@ export default function Home() {
   const openClusterNode = openCluster ? clusterNodes.find(node => node.items.map(item => item.id).sort().join('|') === openCluster) : undefined;
   const lineEnd = contentEnd + MARKER_LABEL_MARGIN - CENTERLINE_LABEL_MARGIN;
   const laneHeight = 150;
-  const splitDate = selected ? selected.category === 'Practice' ? (selected.start.value + (selected.end?.value ?? max)) / 2 : selected.start.value : 0;
+  const splitDate = selected ? selected.date.value : 0;
   const splitOrigin = Math.max(0, Math.min(contentEnd, (splitDate - range[0]) / span * contentEnd));
   const results = query.trim() ? ideas.filter(idea => `${idea.title} ${idea.body} ${idea.track}`.toLowerCase().includes(query.toLowerCase().trim())) : [];
   return (
@@ -222,7 +222,7 @@ export default function Home() {
       <header className="masthead">
         <h1><button type="button" className="timeline-home" onClick={resetTimeline} title="Show the full timeline">LLM Timeline<span className="title-dot">.</span></button></h1>
         <div className="search-wrap"><Search size={17} aria-hidden="true"/><input aria-label="Search ideas" placeholder="Search ideas" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if(event.key === 'Escape') setQuery(''); }}/>
-          {query.trim() && <div className="search-results">{results.length ? results.map(idea => <button key={idea.id} onClick={() => openIdea(idea)}>{idea.title}<small>{idea.track} · {formatIdeaDate(idea.start)}</small></button>) : <p>No matching ideas.</p>}</div>}
+          {query.trim() && <div className="search-results">{results.length ? results.map(idea => <button key={idea.id} onClick={() => openIdea(idea)}>{idea.title}<small>{idea.track} · {formatIdeaDate(idea.date)}</small></button>) : <p>No matching ideas.</p>}</div>}
         </div>
       </header>
 
@@ -284,23 +284,20 @@ export default function Home() {
                 const anchor = node.anchor;
                 const fade = Math.max(0, Math.min(1, anchor / Math.max(60, width * .12)));
                 const top = laneY(laneIndex, anchor, width);
-                const markerCenter = node.kind === 'practice' ? node.width / 2 : 22;
+                  const markerCenter = 22;
                 const tooltipStyle = {
                   left: anchor < 110 ? 0 : anchor > contentEnd - 110 ? 'auto' : undefined,
                   right: anchor > contentEnd - 110 ? 0 : undefined,
                   '--idea-translate-x': anchor < 110 || anchor > contentEnd - 110 ? '0%' : undefined,
                   '--idea-origin': anchor < 110 ? `${markerCenter}px` : anchor > contentEnd - 110 ? `calc(100% - ${markerCenter}px)` : '50%',
                 } as CSSProperties;
-                if (node.kind === 'point') {
-                  return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.start)}`} className={`idea-node point-node ${node.idea.category === 'Capability landmark' ? 'landmark-node' : ''}`} style={{ left: node.left, opacity: fade, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={tooltipStyle}><span className="idea-label">{node.idea.title}</span></span></button>;
-                }
                 if (node.kind === 'cluster') {
                   const open = openCluster === node.items.map(item => item.id).sort().join('|');
                   return <span className="cluster-wrap" key={node.idea.id} style={{ left: node.left, top: `${top}%`, opacity: fade }}>
                     <button className="idea-node point-node cluster-node" data-idea-ids={JSON.stringify(node.items.map(item => item.id))} aria-label={`${node.items.length} ideas, ${node.expandable ? 'zoom in' : 'show list'}`} aria-expanded={open} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={event => handleCluster(node, event.currentTarget)}><span className="idea-dot" aria-hidden="true"/><span className="cluster-count">{node.items.length}</span></button>
                   </span>;
                 }
-                return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.start)}`} className={`idea-node practice-node`} style={{ left: node.left, width: node.width, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={tooltipStyle}><span className="idea-label">{node.idea.title}</span></span></button>;
+                return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.date)}`} className={`idea-node point-node ${node.idea.category === 'Capability landmark' ? 'landmark-node' : ''}`} style={{ left: node.left, opacity: fade, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={tooltipStyle}><span className="idea-label">{node.idea.title}</span></span></button>;
               })}
             </div>)}
           </div>

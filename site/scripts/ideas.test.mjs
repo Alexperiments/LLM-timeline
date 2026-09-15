@@ -4,7 +4,7 @@ import { mkdtemp, writeFile, unlink, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseDate, parseIdea, loadIdeas, ideasPlugin } from './ideas.mjs';
-const document = (fields = '', body = 'A **short** lesson.') => `---\ntitle: Example\ntrack: Model architecture\ncategory: Mechanism\nstarting_date: "2023-06"\n${fields}---\n${body}`;
+const document = (fields = '', body = 'A **short** lesson.') => `---\ntitle: Example\ntrack: Model architecture\ncategory: Mechanism\ndate: "2023-06"\n${fields}---\n${body}`;
 
 test('preserves approximate dates and accepts both ISO and slash notation', () => {
   assert.equal(parseDate('2023').precision, 'year');
@@ -18,17 +18,15 @@ test('preserves approximate dates and accepts both ISO and slash notation', () =
 test('extracts lessons and gives actionable file-specific errors', () => {
   const idea = parseIdea(document(), 'test.md');
   assert.equal(idea.id, 'test');
-  assert.equal(idea.start.precision, 'month');
+  assert.equal(idea.date.precision, 'month');
   assert.equal(idea.body, 'A **short** lesson.');
   assert.throws(() => parseIdea(document().replace('Model architecture', 'Unknown'), 'bad.md'), /bad.md: Unknown track/);
   assert.throws(() => parseIdea(document().replace('title: Example\n', ''), 'bad.md'), /bad.md: Missing required field: title/);
-  assert.throws(() => parseIdea(document('ending_date: "2024"\n'), 'bad.md'), /only allowed for Practice/);
 });
 
-test('validates practice intervals and supports ongoing practices', () => {
+test('practice ideas use the same single date field', () => {
   const practice = document().replace('Mechanism', 'Practice');
-  assert.equal(parseIdea(practice, 'practice.md').end, null);
-  assert.throws(() => parseIdea(practice.replace('---\nA', 'ending_date: "2020"\n---\nA'), 'bad.md'), /must not precede/);
+  assert.equal(parseIdea(practice, 'practice.md').date.precision, 'month');
 });
 
 test('fresh builds discover additions and removals, sort dates, and emit lesson content', async () => {

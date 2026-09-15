@@ -22,15 +22,12 @@ export function parseDate(input) {
 export function parseIdea(source, filename) {
   try {
     const { data, content } = matter(source);
-    for (const field of ['title', 'track', 'category', 'starting_date']) if (!data[field] || !String(data[field]).trim()) throw new Error(`Missing required field: ${field}.`);
+    for (const field of ['title', 'track', 'category', 'date']) if (!data[field] || !String(data[field]).trim()) throw new Error(`Missing required field: ${field}.`);
     if (!['Model architecture', 'Training methods', 'Agent systems'].includes(data.track)) throw new Error(`Unknown track "${data.track}".`);
     if (!['Mechanism', 'Practice', 'Capability landmark'].includes(data.category)) throw new Error(`Unknown category "${data.category}".`);
     const normalize = value => value instanceof Date ? value.toISOString().slice(0, 10) : value;
-    const start = parseDate(normalize(data.starting_date));
-    const end = data.ending_date ? parseDate(normalize(data.ending_date)) : null;
-    if (end && data.category !== 'Practice') throw new Error('ending_date is only allowed for Practice ideas.');
-    if (end && end.value < start.value) throw new Error('ending_date must not precede starting_date.');
-    return { id: filename.replace(/\.md$/i, '').replaceAll('\\', '/'), title: String(data.title), track: data.track, category: data.category, start, end, body: content.trim() };
+    const date = parseDate(normalize(data.date));
+    return { id: filename.replace(/\.md$/i, '').replaceAll('\\', '/'), title: String(data.title), track: data.track, category: data.category, date, body: content.trim() };
   } catch (error) { throw new Error(`${filename}: ${error.message}`); }
 }
 
@@ -46,7 +43,7 @@ export async function loadIdeas(directory) {
   }
   await walk(directory);
   const ideas = await Promise.all(files.sort().map(async file => parseIdea(await readFile(file, 'utf8'), relative(directory, file))));
-  return ideas.sort((a, b) => a.start.value - b.start.value || a.id.localeCompare(b.id));
+  return ideas.sort((a, b) => a.date.value - b.date.value || a.id.localeCompare(b.id));
 }
 
 export function ideasPlugin(directory) {

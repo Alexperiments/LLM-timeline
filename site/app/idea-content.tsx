@@ -89,7 +89,6 @@ export function laneY(lane: number, x: number, surfaceWidth: number) {
 
 export type LayoutNode =
   | { kind: 'point'; idea: Idea; left: number; anchor: number }
-  | { kind: 'practice'; idea: Idea; left: number; width: number; anchor: number }
   | { kind: 'cluster'; idea: Idea; left: number; anchor: number; items: Idea[]; expandable: boolean };
 
 // Punctual idea nodes sit on the lane's middle line. Overlapping ones collapse into a
@@ -97,13 +96,13 @@ export type LayoutNode =
 // or reveals a dropdown for smaller groups that are easier to choose from directly.
 const MIN_CLUSTER_ZOOM_SIZE = 10;
 
-export function layoutIdeas(range: number[], width: number, now: number) {
+export function layoutIdeas(range: number[], width: number, _now: number) {
   const scale = (value: number) => (value - range[0]) / (range[1] - range[0]) * width;
   return ['Model architecture', 'Training methods', 'Agent systems'].map(track => {
     const items: LayoutNode[] = [];
     const punct = ideas
-      .filter(idea => idea.track === track && idea.category !== 'Practice' && idea.start.value >= range[0] && idea.start.value <= range[1])
-      .map(idea => ({ idea, anchor: scale(idea.start.value) }))
+      .filter(idea => idea.track === track && idea.date.value >= range[0] && idea.date.value <= range[1])
+      .map(idea => ({ idea, anchor: scale(idea.date.value) }))
       .sort((a, b) => a.anchor - b.anchor);
     const clusters = groupOverlappingPoints(punct, IDEA_COLLISION_DISTANCE);
     for (const cluster of clusters) {
@@ -115,19 +114,11 @@ export function layoutIdeas(range: number[], width: number, now: number) {
         // preserves the same spacing guarantee used to form the window, so an
         // aggregate cannot overlap the next standalone point after placement.
         const anchor = cluster[0].anchor;
-        const hasDistinctDates = new Set(cluster.map(point => point.idea.start.value)).size > 1;
+        const hasDistinctDates = new Set(cluster.map(point => point.idea.date.value)).size > 1;
         const expandable = cluster.length >= MIN_CLUSTER_ZOOM_SIZE && hasDistinctDates;
         items.push({ kind: 'cluster', idea: cluster[0].idea, left: anchor - 22, anchor, items: cluster.map(point => point.idea), expandable });
       }
     }
-    ideas.filter(idea => idea.track === track && idea.category === 'Practice').forEach(idea => {
-      const end = idea.end?.value ?? Math.max(now, idea.start.value);
-      if (end < range[0] || idea.start.value > range[1]) return;
-      const anchor = scale((idea.start.value + end) / 2);
-      const itemWidth = Math.max(44, Math.min(width, scale(end)) - Math.max(0, scale(idea.start.value)));
-      const left = Math.max(0, Math.min(width - itemWidth, scale(idea.start.value)));
-      items.push({ kind: 'practice', idea, left, width: itemWidth, anchor });
-    });
     return { items, rows: 1 };
   });
 }
@@ -145,7 +136,7 @@ export function Lesson({ idea, onClose, onSelect, container }: { container: RefO
           <div className="lesson-page">
           <header className="lesson-top"><button onClick={onClose} aria-label="Back to timeline"><ArrowLeft size={20}/> Timeline</button><span>{idea.track}</span></header>
           <div className="lesson-scroll" ref={body}>
-            <p className="lesson-meta">{idea.category} · {idea.category === 'Practice' ? 'Starting date' : 'Date'}: {formatIdeaDate(idea.start)}{idea.category === 'Practice' && ` — ${idea.end ? formatIdeaDate(idea.end) : 'ongoing'}`}</p>
+            <p className="lesson-meta">{idea.category} · Date: {formatIdeaDate(idea.date)}</p>
             <Dialog.Title className="lesson-title">{idea.title}</Dialog.Title>
             <article className="lesson-prose"><ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{idea.body || 'This lesson has not been written yet.'}</ReactMarkdown></article>
           </div>
