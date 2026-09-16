@@ -110,10 +110,8 @@ export function layoutIdeas(range: number[], width: number, _now: number) {
         const point = cluster[0];
         items.push({ kind: 'point', idea: point.idea, left: point.anchor - 22, anchor: point.anchor });
       } else {
-        // Keep the aggregate on the first point in its collision window. This
-        // preserves the same spacing guarantee used to form the window, so an
-        // aggregate cannot overlap the next standalone point after placement.
-        const anchor = cluster[0].anchor;
+        // Center the aggregate on its members' mean timeline position.
+        const anchor = cluster.reduce((sum, point) => sum + point.anchor, 0) / cluster.length;
         const hasDistinctDates = new Set(cluster.map(point => point.idea.date.value)).size > 1;
         const expandable = cluster.length >= MIN_CLUSTER_ZOOM_SIZE && hasDistinctDates;
         items.push({ kind: 'cluster', idea: cluster[0].idea, left: anchor - 22, anchor, items: cluster.map(point => point.idea), expandable });
