@@ -6,6 +6,7 @@ import { layoutIdeas, formatIdeaDate, laneY, ribbonPaths, centerlinePaths, type 
 import { LanePulses } from './lane-pulses';
 import { SplitLesson } from './split-lesson';
 import { BackgroundParticles } from './background-particles';
+import { ideaDotSize } from './timeline-layout';
 import { clampThumb, sliderFractions } from './slider-geometry';
 
 const DAY = 86_400_000;
@@ -294,7 +295,7 @@ export default function Home() {
                 if (node.kind === 'cluster') {
                   const open = openCluster === node.items.map(item => item.id).sort().join('|');
                   return <span className="cluster-wrap" key={node.idea.id} style={{ left: node.left, top: `${top}%`, opacity: fade }}>
-                    <button className="idea-node point-node cluster-node" data-idea-ids={JSON.stringify(node.items.map(item => item.id))} aria-label={`${node.items.length} ideas, ${node.expandable ? 'zoom in' : 'show list'}`} aria-expanded={open} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={event => handleCluster(node, event.currentTarget)}><span className="idea-dot" aria-hidden="true"/><span className="cluster-count">{node.items.length}</span></button>
+                    <button className="idea-node point-node cluster-node" style={{ '--idea-dot-size': `${ideaDotSize(node.items.length)}px` } as CSSProperties} data-idea-ids={JSON.stringify(node.items.map(item => item.id))} aria-label={`${node.items.length} ideas, ${node.expandable ? 'zoom in' : 'show list'}`} aria-expanded={open} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={event => handleCluster(node, event.currentTarget)}><span className="idea-dot" aria-hidden="true"><span className="cluster-count">{node.items.length}</span></span></button>
                   </span>;
                 }
                 return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.date)}`} className={`idea-node point-node ${node.idea.category === 'Landmark' ? 'landmark-node' : ''}`} style={{ left: node.left, opacity: fade, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={tooltipStyle}><span className="idea-label">{node.idea.title}</span></span></button>;

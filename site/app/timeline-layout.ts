@@ -24,3 +24,8 @@ export function groupOverlappingPoints<T>(points: readonly AnchoredPoint<T>[], c
   }
   return groups;
 }
+
+// Grow the visible diameter from 18px to 36px, capped at twenty ideas.
+export function ideaDotSize(count: number) {
+  return 18 * (1 + Math.min(19, Math.max(0, count - 1)) / 19);
+}
