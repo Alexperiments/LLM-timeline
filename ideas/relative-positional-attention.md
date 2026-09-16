@@ -5,11 +5,11 @@ title: Relative positional attention
 track: Model architecture
 ---
 
-Relative positional attention modifies [self-attention](/?idea=self-attention) so attention between token positions can depend explicitly on their **relative displacement** rather than relying only on absolute position vectors added to token embeddings [1].
+Relative positional attention modifies [self-attention](/LLM-timeline/?idea=self-attention) so attention between token positions can depend explicitly on their **relative displacement** rather than relying only on absolute position vectors added to token embeddings [1].
 
 Core idea: relation between positions $i$ and $j$ is represented by learned embedding indexed by clipped distance $j-i$. Position information therefore enters attention pairwise.
 
-Legacy: relative position became broad design family. Later systems changed exact parameterization substantially: Transformer-XL decomposed attention scores to support recurrence across segments [4]; T5 later used scalar learned relative-position biases rather than Shaw-style vector representations [5]. [RoPE](/?idea=rotary-poisition-embeddings) and [ALiBi](/?idea=attention-linear-biases) pursue same high-level goal, making attention position-aware through relative relationships.
+Legacy: relative position became broad design family. Later systems changed exact parameterization substantially: Transformer-XL decomposed attention scores to support recurrence across segments [4]; T5 later used scalar learned relative-position biases rather than Shaw-style vector representations [5]. [RoPE](/LLM-timeline/?idea=rotary-poisition-embeddings) and [ALiBi](/LLM-timeline/?idea=attention-linear-biases) pursue same high-level goal, making attention position-aware through relative relationships.
 
 ## What problem does it solve?
 
@@ -19,7 +19,7 @@ $$
 z_i = x_i + p_i
 $$
 
-[self-attention](/?idea=self-attention) then computes, schematically,
+[self-attention](/LLM-timeline/?idea=self-attention) then computes, schematically,
 
 $$
 e_{ij} = \frac{(x_iW^Q)(x_jW^K)^T}{\sqrt{d_k}}.
