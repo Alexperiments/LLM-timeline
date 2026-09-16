@@ -2,10 +2,11 @@ import { type CSSProperties, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
 import ideas, { type Idea } from 'virtual:ideas';
-import { layoutIdeas, formatIdeaDate, laneY, ribbonPaths, centerlinePaths, type LayoutNode } from './idea-content';
+import { layoutIdeas, formatIdeaDate, ribbonPaths, centerlinePaths, type LayoutNode } from './idea-content';
 import { LanePulses } from './lane-pulses';
 import { SplitLesson } from './split-lesson';
 import { BackgroundParticles } from './background-particles';
+import { IdeaMarker } from './idea-marker';
 import { ideaDotSize } from './timeline-layout';
 import { clampThumb, sliderFractions } from './slider-geometry';
 
@@ -281,25 +282,48 @@ export default function Home() {
           </svg>
           <div className="ideas-viewport" style={{ width: contentEnd }}>
             {layout.map((lane, laneIndex) => <div className="idea-lane" key={tracks[laneIndex].title} style={{ top: 0, height: '100%' }}>
-              {lane.items.map(node => {
+              {/* Keep members mounted so grouping can animate in date space. */}
+              {lane.items.flatMap(node => (node.kind === 'cluster' ? node.items : [node.idea]).map(idea => {
+                const hidden = idea.id !== node.idea.id;
+                const cluster = node.kind === 'cluster' && !hidden;
+                const count = node.kind === 'cluster' ? node.items.length : 1;
                 const anchor = node.anchor;
                 const fade = Math.max(0, Math.min(1, anchor / Math.max(60, width * .12)));
-                const top = laneY(laneIndex, anchor, width);
-                  const markerCenter = 22;
+                const date = node.kind === 'cluster'
+                  ? node.items.reduce((sum, item) => sum + item.date.value, 0) / node.items.length
+                  : idea.date.value;
+                const markerCenter = 22;
                 const tooltipStyle = {
                   left: anchor < 110 ? 0 : anchor > contentEnd - 110 ? 'auto' : undefined,
                   right: anchor > contentEnd - 110 ? 0 : undefined,
                   '--idea-translate-x': anchor < 110 || anchor > contentEnd - 110 ? '0%' : undefined,
                   '--idea-origin': anchor < 110 ? `${markerCenter}px` : anchor > contentEnd - 110 ? `calc(100% - ${markerCenter}px)` : '50%',
                 } as CSSProperties;
-                if (node.kind === 'cluster') {
-                  const open = openCluster === node.items.map(item => item.id).sort().join('|');
-                  return <span className="cluster-wrap" key={node.idea.id} style={{ left: node.left, top: `${top}%`, opacity: fade }}>
-                    <button className="idea-node point-node cluster-node" style={{ '--idea-dot-size': `${ideaDotSize(node.items.length)}px` } as CSSProperties} data-idea-ids={JSON.stringify(node.items.map(item => item.id))} aria-label={`${node.items.length} ideas, ${node.expandable ? 'zoom in' : 'show list'}`} aria-expanded={open} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={event => handleCluster(node, event.currentTarget)}><span className="idea-dot" aria-hidden="true"><span className="cluster-count">{node.items.length}</span></span></button>
-                  </span>;
-                }
-                return <button id={`idea-${node.idea.id}`} key={node.idea.id} aria-label={`${node.idea.title} · ${formatIdeaDate(node.idea.date)}`} className={`idea-node point-node ${node.idea.category === 'Landmark' ? 'landmark-node' : ''}`} style={{ left: node.left, opacity: fade, top: `${top}%` }} onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()} onClick={() => openIdea(node.idea)}><span className="idea-dot" aria-hidden="true"/><span className="idea-tooltip" style={tooltipStyle}><span className="idea-label">{node.idea.title}</span></span></button>;
-              })}
+                const open = cluster && openCluster === node.items.map(item => item.id).sort().join('|');
+                return <IdeaMarker
+                  date={date}
+                  range={range}
+                  contentWidth={contentEnd}
+                  surfaceWidth={width}
+                  lane={laneIndex}
+                  id={hidden ? undefined : `idea-${idea.id}`}
+                  key={idea.id}
+                  inert={hidden}
+                  aria-hidden={hidden || undefined}
+                  tabIndex={hidden ? -1 : undefined}
+                  aria-label={cluster ? `${count} ideas, ${node.expandable ? 'zoom in' : 'show list'}` : `${idea.title} · ${formatIdeaDate(idea.date)}`}
+                  aria-expanded={cluster ? open : undefined}
+                  data-idea-ids={cluster ? JSON.stringify(node.items.map(item => item.id)) : undefined}
+                  className={`idea-node point-node ${cluster ? 'cluster-node' : ''} ${hidden ? 'aggregated-member' : ''} ${idea.category === 'Landmark' ? 'landmark-node' : ''}`}
+                  style={{ opacity: hidden ? 0 : fade, '--idea-dot-size': `${ideaDotSize(cluster ? count : 1)}px` } as CSSProperties}
+                  onPointerDown={event => event.stopPropagation()}
+                  onKeyDown={event => event.stopPropagation()}
+                  onClick={event => { if (hidden) return; if (cluster) handleCluster(node, event.currentTarget); else openIdea(idea); }}
+                >
+                  <span className="idea-dot" aria-hidden="true"><span className="cluster-count" style={{ opacity: cluster ? 1 : 0 }}>{cluster ? count : ''}</span></span>
+                  {!cluster && !hidden && <span className="idea-tooltip" style={tooltipStyle}><span className="idea-label">{idea.title}</span></span>}
+                </IdeaMarker>;
+              }))}
             </div>)}
           </div>
           <div ref={labels} className="track-labels">{tracks.map(track => <div className={`track-label ${track.color}`} key={track.color}><h2>{track.title}</h2></div>)}</div>

@@ -97,11 +97,12 @@ html,body,#root { height:100%; overflow:hidden; }
 .ideas-viewport { overflow:visible; clip-path:inset(-60px -32px -20px 0); }
 .idea-node { --idea-hover-period:1.2s; --idea-settle-time:.6s; --idea-breathe-easing:ease-in-out; --idea-ripple-easing:ease-out; --idea-ripple-distance:8px; --idea-ripple-opacity:.55; --idea-breathe-scale:1.1; height:44px; padding:0; background:transparent; border:0; box-shadow:none; border-radius:50%; display:grid; place-items:center; }
 /* Match the 22px anchor offset in layoutIdeas so dots stay on the centerline. */
-.point-node { width:44px; }
+.point-node { width:44px; transition:opacity .4s ease; }
+.idea-node.aggregated-member { pointer-events:none; }
 .idea-node:hover,.idea-node:focus-visible { background:transparent; box-shadow:none; z-index:5; }
 .idea-dot { display:block; width:var(--idea-dot-size,18px); height:var(--idea-dot-size,18px); border-radius:50%; background:#fffdf5; box-shadow:0 1px 5px #26374620; position:relative; }
 .idea-node .idea-dot { overflow:visible; }
-.point-node .idea-dot { scale:1; transition:scale var(--idea-settle-time) cubic-bezier(.4,0,.2,1); animation:idea-breathe 3.2s var(--idea-breathe-easing) infinite; }
+.point-node .idea-dot { scale:1; transition:width .4s cubic-bezier(.4,0,.2,1),height .4s cubic-bezier(.4,0,.2,1),scale var(--idea-settle-time) cubic-bezier(.4,0,.2,1); animation:idea-breathe 3.2s var(--idea-breathe-easing) infinite; }
 .point-node .idea-dot::after { content:''; position:absolute; inset:0; border:1px solid #fffdf5b0; border-radius:50%; opacity:0; pointer-events:none; animation:idea-ripple 3.2s var(--idea-ripple-easing) infinite; }
 .cluster-node:is(:hover,:focus-visible) .idea-dot { scale:1.18; }
 /* Animate only hover expansion. Edge alignment must follow the timeline
@@ -122,12 +123,9 @@ html,body,#root { height:100%; overflow:hidden; }
    combine individual translate/scale properties into transform. */
 @keyframes idea-breathe { 0%,100% { transform:translate(var(--idea-translate-x,0),var(--idea-translate-y,0)) scale(1); } 35% { transform:translate(var(--idea-translate-x,0),var(--idea-translate-y,0)) scale(var(--idea-breathe-scale)); } }
 @keyframes idea-ripple { 0% { inset:0; opacity:var(--idea-ripple-opacity); } 75%,100% { inset:calc(-1 * var(--idea-ripple-distance)); opacity:0; } }
-/* Aggregated nodes: a single point standing in for several crowded ideas.
-   The count shares the dot's center and its breathing animation. */
-.cluster-wrap { position:absolute; transform:translateY(-50%); z-index:4; pointer-events:auto; }
-.cluster-wrap .cluster-node { position:relative; transform:none; }
-.cluster-wrap > * { pointer-events:auto; }
-.idea-dot .cluster-count { position:absolute; inset:0; display:grid; place-items:center; color:#263746; font:700 11px/1 Arial,Helvetica,sans-serif; font-variant-numeric:tabular-nums; }
+/* The count shares the dot's center and its breathing animation. */
+.cluster-node { z-index:4; }
+.idea-dot .cluster-count { position:absolute; inset:0; display:grid; place-items:center; color:#263746; font:700 11px/1 Arial,Helvetica,sans-serif; font-variant-numeric:tabular-nums; transition:opacity .25s ease; }
 .cluster-dropdown { position:fixed; left:0; top:0; transform:translateX(-50%); width:min(320px,calc(100vw - 24px)); min-width:min(220px,calc(100vw - 24px)); max-height:min(280px,calc(100vh - 24px)); background:var(--background); border:1px solid var(--border); border-radius:6px; box-shadow:0 8px 24px #26374628; z-index:1000; padding:6px; }
 .cluster-dropdown ul { list-style:none; margin:0; padding:0; max-height:min(220px,calc(100vh - 80px)); overflow:auto; }
 .cluster-dropdown li { border-bottom:1px solid var(--border); }
