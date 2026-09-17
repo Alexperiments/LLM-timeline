@@ -8,19 +8,29 @@ export const IDEA_COLLISION_MARGIN = 12;
 export const IDEA_COLLISION_DISTANCE = IDEA_NODE_WIDTH + IDEA_COLLISION_MARGIN;
 
 /**
- * Group only the points in one bounded collision window.
- *
- * Comparing with the first point in the current group is intentional. Using
- * the previous point creates a transitive chain where a whole dense timeline
- * becomes one aggregate, even though its endpoints would not overlap.
+ * Cut a stable hierarchy at the requested maximum span. Each branch splits
+ * at its largest gap (the earliest gap wins ties), independent of the cutoff.
+ * Reducing the cutoff can therefore only subdivide existing groups.
+ * Pass all points in date coordinates and a cutoff in date units so panning
+ * and floating-point screen projection cannot change the hierarchy.
  */
 export function groupOverlappingPoints<T>(points: readonly AnchoredPoint<T>[], collisionDistance = IDEA_COLLISION_DISTANCE) {
   const sorted = [...points].sort((a, b) => a.anchor - b.anchor);
   const groups: AnchoredPoint<T>[][] = [];
-  for (const point of sorted) {
-    const current = groups.at(-1);
-    if (current && point.anchor - current[0].anchor <= collisionDistance) current.push(point);
-    else groups.push([point]);
+  const pending = sorted.length ? [[0, sorted.length]] : [];
+  while (pending.length) {
+    const [start, end] = pending.pop()!;
+    const span = sorted[end - 1].anchor - sorted[start].anchor;
+    if (end - start === 1 || span === 0 || span <= collisionDistance) {
+      groups.push(sorted.slice(start, end));
+      continue;
+    }
+    let split = start + 1;
+    for (let index = start + 2; index < end; index++) {
+      if (sorted[index].anchor - sorted[index - 1].anchor > sorted[split].anchor - sorted[split - 1].anchor) split = index;
+    }
+    // Stack the right branch first to emit groups in chronological order.
+    pending.push([split, end], [start, split]);
   }
   return groups;
 }

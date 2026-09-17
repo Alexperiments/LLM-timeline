@@ -101,11 +101,16 @@ export function layoutIdeas(range: number[], width: number, _now: number) {
   return ['Model architecture', 'Training methods', 'Agent systems'].map(track => {
     const items: LayoutNode[] = [];
     const punct = ideas
-      .filter(idea => idea.track === track && idea.date.value >= range[0] && idea.date.value <= range[1])
-      .map(idea => ({ idea, anchor: scale(idea.date.value) }))
+      .filter(idea => idea.track === track)
+      .map(idea => ({ idea, anchor: idea.date.value }))
       .sort((a, b) => a.anchor - b.anchor);
-    const clusters = groupOverlappingPoints(punct, IDEA_COLLISION_DISTANCE);
-    for (const cluster of clusters) {
+    const collisionSpan = IDEA_COLLISION_DISTANCE * (range[1] - range[0]) / Math.max(1, width);
+    const clusters = groupOverlappingPoints(punct, collisionSpan);
+    for (const members of clusters) {
+      // Cull whole groups only; clipping individual members would change counts
+      // as the viewport moves across a group's date range.
+      if (members.at(-1)!.anchor < range[0] || members[0].anchor > range[1]) continue;
+      const cluster = members.map(point => ({ idea: point.idea, anchor: scale(point.anchor) }));
       if (cluster.length === 1) {
         const point = cluster[0];
         items.push({ kind: 'point', idea: point.idea, left: point.anchor - 22, anchor: point.anchor });
